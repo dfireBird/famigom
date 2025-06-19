@@ -152,11 +152,87 @@ func (c *CPU) Step() {
 		c.INX()
 	case 0xC8:
 		c.INY()
-
 	case 0xCA:
 		c.DEX()
 	case 0x88:
 		c.DEY()
+
+	case 0x81:
+		c.STA(c.getWithXIndexIndirectAddr())
+	case 0x91:
+		c.STA(c.getWithIndirectYIndexAddr())
+	case 0x85:
+		c.STA(c.getWithZeroPageAddress())
+	case 0x95:
+		c.STA(c.getWithZeroPageIndexedAddr(c.X))
+	case 0x99:
+		c.STA(c.getWithAbsoluteIndexedAddr(c.Y))
+	case 0x8D:
+		c.STA(c.getWithAbsoluteAddress())
+	case 0x9D:
+		c.STA(c.getWithAbsoluteIndexedAddr(c.X))
+
+	case 0x86:
+		c.STX(c.getWithZeroPageAddress())
+	case 0x96:
+		c.STX(c.getWithZeroPageIndexedAddr(c.Y))
+	case 0x8E:
+		c.STX(c.getWithAbsoluteAddress())
+
+	case 0x84:
+		c.STY(c.getWithZeroPageAddress())
+	case 0x94:
+		c.STY(c.getWithZeroPageIndexedAddr(c.X))
+	case 0x8C:
+		c.STY(c.getWithAbsoluteAddress())
+
+	case 0xA1:
+		c.LDA(c.getWithXIndexIndirectAddr())
+	case 0xB1:
+		c.LDA(c.getWithIndirectYIndexAddr())
+	case 0xA5:
+		c.LDA(c.getWithZeroPageAddress())
+	case 0xB5:
+		c.LDA(c.getWithZeroPageIndexedAddr(c.X))
+	case 0xA9:
+		c.LDA(c.getWithImmediate())
+	case 0xB9:
+		c.LDA(c.getWithAbsoluteIndexedAddr(c.Y))
+	case 0xAD:
+		c.LDA(c.getWithAbsoluteAddress())
+	case 0xBD:
+		c.LDA(c.getWithAbsoluteIndexedAddr(c.X))
+
+	case 0xA2:
+		c.LDX(c.getWithImmediate())
+	case 0xA6:
+		c.LDX(c.getWithZeroPageAddress())
+	case 0xB6:
+		c.LDX(c.getWithZeroPageIndexedAddr(c.Y))
+	case 0xAE:
+		c.LDX(c.getWithAbsoluteAddress())
+	case 0xBE:
+		c.LDX(c.getWithAbsoluteIndexedAddr(c.Y))
+
+	case 0xA0:
+		c.LDY(c.getWithImmediate())
+	case 0xA4:
+		c.LDX(c.getWithZeroPageAddress())
+	case 0xB4:
+		c.LDY(c.getWithZeroPageIndexedAddr(c.Y))
+	case 0xAC:
+		c.LDY(c.getWithAbsoluteAddress())
+	case 0xBC:
+		c.LDY(c.getWithAbsoluteIndexedAddr(c.Y))
+
+	case 0xAA:
+		c.TAX()
+	case 0xA8:
+		c.TAY()
+	case 0x8A:
+		c.TXA()
+	case 0x98:
+		c.TYA()
 	}
 }
 

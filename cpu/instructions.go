@@ -80,6 +80,67 @@ func (c *CPU) DEY() {
 	c.Y = c.decrement(c.Y)
 }
 
+func (c *CPU) LDA(value byte) {
+	c.A = c.load(value)
+}
+
+func (c *CPU) LDX(value byte) {
+	c.X = c.load(value)
+}
+
+func (c *CPU) LDY(value byte) {
+	c.Y = c.load(value)
+}
+
+// Stores use getXXXAddr functions result as parameter but doesn't use it
+// But uses the currentGetAddr as address value to write to
+func (c *CPU) STA(_ byte) {
+	c.writeMemory(c.currentGetAddr, c.A)
+}
+
+func (c *CPU) STX(_ byte) {
+	c.writeMemory(c.currentGetAddr, c.X)
+}
+
+func (c *CPU) STY(_ byte) {
+	c.writeMemory(c.currentGetAddr, c.Y)
+}
+
+func (c *CPU) TAX() {
+	c.X = c.A
+
+	c.Flags.SetZero(c.A == 0)
+	c.Flags.SetZero(isNegative(c.A))
+}
+
+func (c *CPU) TAY() {
+	c.Y = c.A
+
+	c.Flags.SetZero(c.A == 0)
+	c.Flags.SetZero(isNegative(c.A))
+}
+
+func (c *CPU) TXA() {
+	c.A = c.X
+
+	c.Flags.SetZero(c.A == 0)
+	c.Flags.SetZero(isNegative(c.A))
+}
+
+func (c *CPU) TYA() {
+	c.A = c.Y
+
+	c.Flags.SetZero(c.A == 0)
+	c.Flags.SetZero(isNegative(c.A))
+}
+
+func (c *CPU) load(value byte) byte {
+	c.Flags.SetZero(value == 0)
+	c.Flags.SetNegative(isNegative(value))
+
+	return value
+}
+
 func (c *CPU) increment(op byte) byte {
 	res := op + 1
 

@@ -6,21 +6,25 @@ const (
 
 func (c *CPU) getWithAbsoluteAddress() byte {
 	addr := c.getAbsoluteAddr()
+	c.currentGetAddr = addr
 	return c.readMemory(addr)
 }
 
 func (c *CPU) getWithZeroPageAddress() byte {
 	addr := c.getZeroPageAddr()
+	c.currentGetAddr = addr
 	return c.readMemory(addr)
 }
 
 func (c *CPU) getWithAbsoluteIndexedAddr(idx byte) byte {
 	addr := c.getAbsoluteAddr() + word(idx)
+	c.currentGetAddr = addr
 	return c.readMemory(addr)
 }
 
 func (c *CPU) getWithZeroPageIndexedAddr(idx byte) byte {
 	addr := (c.getZeroPageAddr() + word(idx)) % ZERO_PAGE_MAX
+	c.currentGetAddr = addr
 	return c.readMemory(addr)
 }
 
@@ -32,6 +36,7 @@ func (c *CPU) getWithXIndexIndirectAddr() byte {
 	hi := c.readMemory((addr + word(c.X) + 1) % ZERO_PAGE_MAX)
 
 	effectiveAddr := joinBytesToWord(lo, hi)
+	c.currentGetAddr = effectiveAddr
 	return c.readMemory(effectiveAddr)
 }
 
@@ -43,6 +48,7 @@ func (c *CPU) getWithIndirectYIndexAddr() byte {
 	hi := c.readMemory((addr + 1) % ZERO_PAGE_MAX)
 
 	effectiveAddr := joinBytesToWord(lo, hi) + word(c.Y)
+	c.currentGetAddr = effectiveAddr
 	return c.readMemory(effectiveAddr)
 }
 

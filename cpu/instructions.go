@@ -1,53 +1,124 @@
 package cpu
 
 const (
-	HI_BIT_SET  = 0b1000_0000
-	HI_BIT_MASK = 1 << 7
+	BIT_7_NEG_SET = 0b1000_0000
+	BIT_8_OVL_SET = 0x100
 
 	IRQ_BRK_HANDLER_ADDR = 0xFFFE
 )
 
-func (c *CPU) brk() {
+func (c *CPU) BRK() {
 	c.pushAddrIntoStack(c.PC + 1)
 	c.pushIntoStack(c.SP | BREAK_BIT_MASK)
-	c.SR.SetInterruptDisable(true)
+	c.Flags.SetInterruptDisable(true)
 
 	c.PC = IRQ_BRK_HANDLER_ADDR
 }
 
-func (c *CPU) or(op byte) {
+func (c *CPU) ORA(op byte) {
 	c.A |= op
 
-	c.SR.SetZero(c.A == 0)
-	c.SR.SetNegative(c.A&HI_BIT_MASK == HI_BIT_SET)
+	c.Flags.SetZero(c.A == 0)
+	c.Flags.SetNegative(isNegative(c.A))
 }
 
-func (c *CPU) and(op byte) {
+func (c *CPU) AND(op byte) {
 	c.A &= op
 
-	c.SR.SetZero(c.A == 0)
-	c.SR.SetNegative(c.A&HI_BIT_MASK == HI_BIT_SET)
+	c.Flags.SetZero(c.A == 0)
+	c.Flags.SetNegative(isNegative(c.A))
 }
 
-func (c *CPU) xor(op byte) {
+func (c *CPU) EOR(op byte) {
 	c.A ^= op
 
-	c.SR.SetZero(c.A == 0)
-	c.SR.SetNegative(c.A&HI_BIT_MASK == HI_BIT_SET)
+	c.Flags.SetZero(c.A == 0)
+	c.Flags.SetNegative(isNegative(c.A))
 }
 
-func (c *CPU) bit(op byte) {
-    res := c.A & op
-	bit6 := (op & (1<<6)) >> 6
-	bit7 := (op & (1<<7)) >> 7
+func (c *CPU) BIT(op byte) {
+	res := c.A & op
+	bit6 := (op & (1 << 6)) >> 6
+	bit7 := (op & (1 << 7)) >> 7
 
-	c.SR.SetZero(res == 0)
-	c.SR.SetOverflow(bit6 == 1)
-	c.SR.SetNegative(bit7 == 1)
+	c.Flags.SetZero(res == 0)
+	c.Flags.SetOverflow(bit6 == 1)
+	c.Flags.SetNegative(bit7 == 1)
+}
+
+func (c *CPU) ADC(op byte) {
+	c.add(op)
+}
+
+func (c *CPU) SBC(op byte) {
+	c.add(^op)
+}
+
+func (c *CPU) INC(op byte, memSet func(word, byte)) {
+	res := c.increment(op)
+	memSet(c.currentGetAddr, res)
+}
+
+func (c *CPU) INX() {
+	c.X = c.increment(c.X)
+}
+
+func (c *CPU) INY() {
+	c.Y = c.increment(c.Y)
+}
+
+func (c *CPU) DEC(op byte, memSet func(word, byte)) {
+    res := c.decrement(op)
+	memSet(c.currentGetAddr, res)
+}
+
+func (c *CPU) DEX() {
+	c.X = c.decrement(c.X)
+}
+
+func (c *CPU) DEY() {
+	c.Y = c.decrement(c.Y)
+}
+
+func (c *CPU) increment(op byte) byte {
+	res := op + 1
+
+	c.Flags.SetZero(res == 0)
+	c.Flags.SetNegative(isNegative(res))
+
+	return res
+}
+
+func (c *CPU) decrement(op byte) byte {
+	res := op - 1
+
+	c.Flags.SetZero(res == 0)
+	c.Flags.SetNegative(isNegative(res))
+
+	return res
+}
+
+func (c *CPU) add(op byte) {
+	carry := c.Flags.GetCarryNum()
+	result := c.A + op + carry
+
+	// Masking the 8th bit in 16bit value for carry
+	resultAs16Bit := word(c.A) + word(op) + word(carry)
+	c.Flags.SetCarry((resultAs16Bit & BIT_8_OVL_SET) == BIT_8_OVL_SET)
+
+	c.Flags.SetZero(result == 0)
+	c.Flags.SetNegative(isNegative(result))
+	c.Flags.SetOverflow(((result ^ c.A) & (result ^ op) & BIT_7_NEG_SET) == BIT_7_NEG_SET)
+
+	c.A = result
 }
 
 func (c *CPU) pushAddrIntoStack(value word) {
 	lo, hi := splitWordToByte(value)
 	c.pushIntoStack(lo)
 	c.pushIntoStack(hi)
+}
+
+func isNegative(val byte) bool {
+	return val&BIT_7_NEG_SET == BIT_7_NEG_SET
 }

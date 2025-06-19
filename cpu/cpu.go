@@ -13,13 +13,16 @@ type CPU struct {
 	A byte
 
 	// Special Registers
-	SR status
-	SP byte
-	PC word
-
-	// TODO: should have references to PPU and APU as well here
+	Flags status
+	SP    byte
+	PC    word
 
 	Memory [maxMemory]byte
+
+	// Internal to emulator
+
+	// Only used in GetXXXAddr funtions for memory write instructions
+	currentGetAddr word
 }
 
 func New() CPU {
@@ -35,63 +38,125 @@ func (c *CPU) Step() {
 	c.PC++
 	switch opcode {
 	case 0x00:
-		c.brk()
+		c.BRK()
 
 	case 0x01:
-		c.or(c.getWithXIndexIndirectAddr())
+		c.ORA(c.getWithXIndexIndirectAddr())
 	case 0x11:
-		c.or(c.getWithIndirectYIndexAddr())
+		c.ORA(c.getWithIndirectYIndexAddr())
 	case 0x05:
-		c.or(c.getWithZeroPageAddress())
+		c.ORA(c.getWithZeroPageAddress())
 	case 0x15:
-		c.or(c.getWithZeroPageIndexedAddr(c.X))
+		c.ORA(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x09:
-		c.or(c.getWithImmediate())
+		c.ORA(c.getWithImmediate())
 	case 0x19:
-		c.or(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.ORA(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0x0D:
-		c.or(c.getWithAbsoluteAddress())
+		c.ORA(c.getWithAbsoluteAddress())
 	case 0x1D:
-		c.or(c.getWithAbsoluteIndexedAddr(c.X))
+		c.ORA(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0x21:
-		c.and(c.getWithXIndexIndirectAddr())
+		c.AND(c.getWithXIndexIndirectAddr())
 	case 0x31:
-		c.and(c.getWithIndirectYIndexAddr())
+		c.AND(c.getWithIndirectYIndexAddr())
 	case 0x25:
-		c.and(c.getWithZeroPageAddress())
+		c.AND(c.getWithZeroPageAddress())
 	case 0x35:
-		c.and(c.getWithZeroPageIndexedAddr(c.X))
+		c.AND(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x29:
-		c.and(c.getWithImmediate())
+		c.AND(c.getWithImmediate())
 	case 0x39:
-		c.and(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.AND(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0x2D:
-		c.and(c.getWithAbsoluteAddress())
+		c.AND(c.getWithAbsoluteAddress())
 	case 0x3D:
-		c.and(c.getWithAbsoluteIndexedAddr(c.X))
+		c.AND(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0x41:
-		c.xor(c.getWithXIndexIndirectAddr())
+		c.EOR(c.getWithXIndexIndirectAddr())
 	case 0x51:
-		c.xor(c.getWithIndirectYIndexAddr())
+		c.EOR(c.getWithIndirectYIndexAddr())
 	case 0x45:
-		c.xor(c.getWithZeroPageAddress())
+		c.EOR(c.getWithZeroPageAddress())
 	case 0x55:
-		c.xor(c.getWithZeroPageIndexedAddr(c.X))
+		c.EOR(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x49:
-		c.xor(c.getWithImmediate())
+		c.EOR(c.getWithImmediate())
 	case 0x59:
-		c.xor(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.EOR(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0x4D:
-		c.xor(c.getWithAbsoluteAddress())
+		c.EOR(c.getWithAbsoluteAddress())
 	case 0x5D:
-		c.xor(c.getWithAbsoluteIndexedAddr(c.X))
+		c.EOR(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0x24:
-		c.bit(c.getWithZeroPageAddress())
+		c.BIT(c.getWithZeroPageAddress())
 	case 0x2C:
-		c.bit(c.getWithAbsoluteAddress())
+		c.BIT(c.getWithAbsoluteAddress())
+
+	case 0x61:
+		c.ADC(c.getWithXIndexIndirectAddr())
+	case 0x71:
+		c.ADC(c.getWithIndirectYIndexAddr())
+	case 0x65:
+		c.ADC(c.getWithZeroPageAddress())
+	case 0x75:
+		c.ADC(c.getWithZeroPageIndexedAddr(c.X))
+	case 0x69:
+		c.ADC(c.getWithImmediate())
+	case 0x79:
+		c.ADC(c.getWithAbsoluteIndexedAddr(c.Y))
+	case 0x6D:
+		c.ADC(c.getWithAbsoluteAddress())
+	case 0x7D:
+		c.ADC(c.getWithAbsoluteIndexedAddr(c.X))
+
+	case 0xE1:
+		c.SBC(c.getWithXIndexIndirectAddr())
+	case 0xF1:
+		c.SBC(c.getWithIndirectYIndexAddr())
+	case 0xE5:
+		c.SBC(c.getWithZeroPageAddress())
+	case 0xF5:
+		c.SBC(c.getWithZeroPageIndexedAddr(c.X))
+	case 0xE9:
+		c.SBC(c.getWithImmediate())
+	case 0xF9:
+		c.SBC(c.getWithAbsoluteIndexedAddr(c.Y))
+	case 0xED:
+		c.SBC(c.getWithAbsoluteAddress())
+	case 0xFD:
+		c.SBC(c.getWithAbsoluteIndexedAddr(c.X))
+
+	case 0xE6:
+		c.INC(c.getWithZeroPageAddress(), c.writeMemory)
+	case 0xEE:
+		c.INC(c.getWithAbsoluteAddress(), c.writeMemory)
+	case 0xF6:
+		c.INC(c.getWithZeroPageIndexedAddr(c.X), c.writeMemory)
+	case 0xFE:
+		c.INC(c.getWithAbsoluteIndexedAddr(c.X), c.writeMemory)
+
+	case 0xC6:
+		c.DEC(c.getWithZeroPageAddress(), c.writeMemory)
+	case 0xCE:
+		c.DEC(c.getWithAbsoluteAddress(), c.writeMemory)
+	case 0xD6:
+		c.DEC(c.getWithZeroPageIndexedAddr(c.X), c.writeMemory)
+	case 0xDE:
+		c.DEC(c.getWithAbsoluteIndexedAddr(c.X), c.writeMemory)
+
+	case 0xE8:
+		c.INX()
+	case 0xC8:
+		c.INY()
+
+	case 0xCA:
+		c.DEX()
+	case 0x88:
+		c.DEY()
 	}
 }
 

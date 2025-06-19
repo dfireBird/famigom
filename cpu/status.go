@@ -76,6 +76,14 @@ func (s *status) GetCarry() bool {
 	return s.getXBit(CARRY_BIT_MASK, CARRY_SHIFT)
 }
 
+func (s *status) GetCarryNum() byte {
+	if s.GetCarry() {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 func (s *status) setXBit(value bool, mask byte) {
 	if value {
 		*s |= status (mask)

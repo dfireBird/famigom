@@ -28,6 +28,16 @@ func not(value byte) byte {
 	return 0b1111_1111 ^ value
 }
 
+func (s *status) SetValueFromStack(value byte) {
+	newStatus := status(value)
+	s.SetCarry(newStatus.GetCarry())
+	s.SetZero(newStatus.GetZero())
+	s.SetInterruptDisable(newStatus.GetInterruptDisable())
+	s.SetDecimal(newStatus.GetDecimal())
+	s.SetOverflow(newStatus.GetOverflow())
+	s.SetNegative(newStatus.GetNegative())
+}
+
 func (s *status) SetNegative(value bool) {
 	s.setXBit(value, NEGATIVE_BIT_MASK)
 }

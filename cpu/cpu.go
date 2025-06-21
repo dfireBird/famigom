@@ -43,6 +43,8 @@ func (c *CPU) Step() {
 	switch opcode {
 	case 0x00:
 		c.BRK()
+	case 0x40:
+		c.RTI()
 
 	case 0x01:
 		c.ORA(c.getWithXIndexIndirectAddr())
@@ -312,6 +314,33 @@ func (c *CPU) Step() {
 		c.CPX(c.getWithZeroPageAddress())
 	case 0xEC:
 		c.CPX(c.getWithAbsoluteAddress())
+
+	case 0x10:
+		c.BPL(c.getWithRelative())
+	case 0x30:
+		c.BMI(c.getWithRelative())
+	case 0x50:
+		c.BVC(c.getWithRelative())
+	case 0x70:
+		c.BVS(c.getWithRelative())
+	case 0x90:
+		c.BCC(c.getWithRelative())
+	case 0xB0:
+		c.BCS(c.getWithRelative())
+	case 0xD0:
+		c.BNE(c.getWithRelative())
+	case 0xF0:
+		c.BEQ(c.getWithRelative())
+
+	case 0x4C:
+		c.JMP(c.getAbsoluteAddr())
+	case 0x6C:
+		c.JMP(c.getIndirectAddr())
+
+	case 0x20:
+		c.JSR(c.getAbsoluteAddr())
+	case 0x60:
+		c.RTS()
 	}
 }
 
@@ -327,6 +356,13 @@ func (c *CPU) pushIntoStack(value byte) {
 	effectiveStackAddr := 0x0100 | word(c.SP)
 	c.writeMemory(effectiveStackAddr, value)
 	c.SP--
+}
+
+func (c *CPU) pullFromStack() byte {
+	effectiveStackAddr := 0x0100 | word(c.SP)
+	value := c.readMemory(effectiveStackAddr)
+	c.SP++
+	return value
 }
 
 func joinBytesToWord(lo, hi byte) word {

@@ -58,6 +58,30 @@ func (c *CPU) getWithImmediate() byte {
 	return v
 }
 
+// Only used with branching instructions
+// and only understood as relative by branching instructions
+// but similar to getWithImmediate
+func (c *CPU) getWithRelative() byte {
+	return c.getWithImmediate()
+}
+
+// Indirect addressing mode is basically retrieving
+// absolute address from the ROM and using that address
+// to retrieve from memory the effective address
+// Only used in JMP
+func (c *CPU) getIndirectAddr() word {
+	lo := c.readMemory(c.PC)
+	c.PC++
+	hi := c.readMemory(c.PC)
+	c.PC++
+
+
+	loAddr, hiAddr := joinBytesToWord(lo, hi), joinBytesToWord((lo + 1), hi)
+	effectiveLo := c.readMemory(loAddr)
+	effectiveHi := c.readMemory(hiAddr)
+	return joinBytesToWord(effectiveLo, effectiveHi)
+}
+
 func (c *CPU) getAbsoluteAddr() word {
 	lo := c.readMemory(c.PC)
 	c.PC++

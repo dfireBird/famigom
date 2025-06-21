@@ -9,7 +9,7 @@ const (
 
 func (c *CPU) BRK() {
 	c.pushAddrIntoStack(c.PC + 1)
-	c.pushIntoStack(c.SP | BREAK_BIT_MASK)
+	c.pushIntoStack(byte(c.Flags) | BREAK_BIT_MASK)
 	c.Flags.SetInterruptDisable(true)
 
 	c.PC = IRQ_BRK_HANDLER_ADDR
@@ -162,6 +162,80 @@ func (c *CPU) CPY(value byte) {
     c.compare(c.Y, value)
 }
 
+func (c *CPU) JMP(addr word) {
+    c.PC = addr
+}
+
+func (c *CPU) JSR(addr word) {
+	c.pushAddrIntoStack(c.PC)
+	c.PC = addr
+}
+
+func (c *CPU) RTS() {
+	pc := c.pullAddrFromStack()
+	c.PC = pc + 1
+}
+
+func (c *CPU) RTI() {
+	flags := c.pullFromStack()
+    pc := c.pullAddrFromStack()
+
+	c.Flags.SetValueFromStack(flags)
+	c.PC = pc
+}
+
+func (c *CPU) BCS(offset byte) {
+	if c.Flags.GetCarry() {
+		c.branch(offset)
+	}
+}
+
+func (c *CPU) BCC(offset byte) {
+	if !c.Flags.GetCarry() {
+		c.branch(offset)
+	}
+}
+
+func (c *CPU) BEQ(offset byte) {
+    if c.Flags.GetZero() {
+		c.branch(offset)
+	}
+}
+
+func (c *CPU) BNE(offset byte) {
+    if !c.Flags.GetZero() {
+		c.branch(offset)
+	}
+}
+
+func (c *CPU) BMI(offset byte) {
+    if c.Flags.GetNegative() {
+		c.branch(offset)
+	}
+}
+
+func (c *CPU) BPL(offset byte) {
+    if !c.Flags.GetNegative() {
+		c.branch(offset)
+	}
+}
+
+func (c *CPU) BVS(offset byte) {
+    if c.Flags.GetOverflow() {
+		c.branch(offset)
+	}
+}
+
+func (c *CPU) BVC(offset byte) {
+    if !c.Flags.GetOverflow() {
+		c.branch(offset)
+	}
+}
+
+func (c *CPU) branch(offset byte) {
+    signedOffset := int32(int8(offset))
+	c.PC = uint16(int32(c.PC) + signedOffset)
+}
 
 func (c *CPU) compare(register, value byte) {
 	c.Flags.SetCarry(register >= value)
@@ -249,6 +323,13 @@ func (c *CPU) pushAddrIntoStack(value word) {
 	lo, hi := splitWordToByte(value)
 	c.pushIntoStack(lo)
 	c.pushIntoStack(hi)
+}
+
+func (c *CPU) pullAddrFromStack() word {
+    lo := c.pullFromStack()
+	hi := c.pullFromStack()
+
+	return joinBytesToWord(lo, hi)
 }
 
 func isNegative(val byte) bool {

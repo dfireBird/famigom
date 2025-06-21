@@ -68,7 +68,7 @@ func (c *CPU) INY() {
 }
 
 func (c *CPU) DEC(op byte, memSet func(word, byte)) {
-    res := c.decrement(op)
+	res := c.decrement(op)
 	memSet(c.currentGetAddr, res)
 }
 
@@ -109,15 +109,15 @@ func (c *CPU) STY(_ byte) {
 func (c *CPU) TAX() {
 	c.X = c.A
 
-	c.Flags.SetZero(c.A == 0)
-	c.Flags.SetZero(isNegative(c.A))
+	c.Flags.SetZero(c.X == 0)
+	c.Flags.SetZero(isNegative(c.X))
 }
 
 func (c *CPU) TAY() {
 	c.Y = c.A
 
-	c.Flags.SetZero(c.A == 0)
-	c.Flags.SetZero(isNegative(c.A))
+	c.Flags.SetZero(c.Y == 0)
+	c.Flags.SetZero(isNegative(c.Y))
 }
 
 func (c *CPU) TXA() {
@@ -132,6 +132,77 @@ func (c *CPU) TYA() {
 
 	c.Flags.SetZero(c.A == 0)
 	c.Flags.SetZero(isNegative(c.A))
+}
+
+func (c *CPU) ASL(value byte, resSet func(byte)) {
+	c.shift(value, resSet, true)
+}
+
+func (c *CPU) LSR(value byte, resSet func(byte)) {
+	c.shift(value, resSet, false)
+}
+
+func (c *CPU) ROL(value byte, resSet func(byte)) {
+	c.rotate(value, resSet, true)
+}
+
+func (c *CPU) ROR(value byte, resSet func(byte)) {
+	c.rotate(value, resSet, false)
+}
+
+func (c *CPU) CMP(value byte) {
+	c.compare(c.A, value)
+}
+
+func (c *CPU) CPX(value byte) {
+	c.compare(c.X, value)
+}
+
+func (c *CPU) CPY(value byte) {
+    c.compare(c.Y, value)
+}
+
+
+func (c *CPU) compare(register, value byte) {
+	c.Flags.SetCarry(register >= value)
+	c.Flags.SetZero(register == value)
+	c.Flags.SetNegative(isNegative(register - value))
+}
+
+func (c *CPU) shift(value byte, resSet func(byte), isLeft bool) {
+	var result byte
+	var carry bool
+	if isLeft {
+		result = value << 1
+		carry = isNegative(value) // using isNegative since they both use bit 7
+	} else {
+		result = value >> 1
+		carry = (value & 1) == 1
+	}
+
+	c.Flags.SetCarry(carry)
+	c.Flags.SetNegative(isNegative(result))
+	c.Flags.SetZero(result == 0)
+
+	resSet(result)
+}
+
+func (c *CPU) rotate(value byte, resSet func(byte), isLeft bool) {
+	var result byte
+	var carry bool
+	if carryValue := c.Flags.GetCarryNum(); isLeft {
+		result = (value << 1) | carryValue
+		carry = isNegative(value) // using isNegative since they both use bit 7
+	} else {
+		result = (value >> 1) | (carryValue << 7)
+		carry = (value & 1) == 1
+	}
+
+	c.Flags.SetCarry(carry)
+	c.Flags.SetNegative(isNegative(result))
+	c.Flags.SetZero(result == 0)
+
+	resSet(result)
 }
 
 func (c *CPU) load(value byte) byte {

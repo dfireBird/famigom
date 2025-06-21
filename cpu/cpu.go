@@ -34,6 +34,10 @@ func New() CPU {
 }
 
 func (c *CPU) Step() {
+	setResultFactory := func(c *CPU) func(byte) {
+		return func(v byte) { c.writeMemory(c.currentGetAddr, v) }
+	}
+
 	opcode := c.readMemory(c.PC)
 	c.PC++
 	switch opcode {
@@ -233,6 +237,81 @@ func (c *CPU) Step() {
 		c.TXA()
 	case 0x98:
 		c.TYA()
+
+	case 0x06:
+		c.ASL(c.getWithZeroPageAddress(), setResultFactory(c))
+	case 0x16:
+		c.ASL(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
+	case 0x0A:
+		c.ASL(c.A, func(v byte) { c.A = v })
+	case 0x0E:
+		c.ASL(c.getWithAbsoluteAddress(), setResultFactory(c))
+	case 0x1E:
+		c.ASL(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+
+	case 0x46:
+		c.LSR(c.getWithZeroPageAddress(), setResultFactory(c))
+	case 0x56:
+		c.LSR(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
+	case 0x4A:
+		c.LSR(c.A, func(v byte) { c.A = v })
+	case 0x4E:
+		c.LSR(c.getWithAbsoluteAddress(), setResultFactory(c))
+	case 0x5E:
+		c.LSR(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+
+	case 0x26:
+		c.ROL(c.getWithZeroPageAddress(), setResultFactory(c))
+	case 0x36:
+		c.ROL(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
+	case 0x2A:
+		c.ROL(c.A, func(v byte) { c.A = v })
+	case 0x2E:
+		c.ROL(c.getWithAbsoluteAddress(), setResultFactory(c))
+	case 0x3E:
+		c.ROL(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+
+	case 0x66:
+		c.ROR(c.getWithZeroPageAddress(), setResultFactory(c))
+	case 0x76:
+		c.ROR(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
+	case 0x6A:
+		c.ROR(c.A, func(v byte) { c.A = v })
+	case 0x6E:
+		c.ROR(c.getWithAbsoluteAddress(), setResultFactory(c))
+	case 0x7E:
+		c.ROR(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+
+	case 0xC1:
+		c.CMP(c.getWithXIndexIndirectAddr())
+	case 0xD1:
+		c.CMP(c.getWithIndirectYIndexAddr())
+	case 0xC5:
+		c.CMP(c.getWithZeroPageAddress())
+	case 0xD5:
+		c.CMP(c.getWithZeroPageIndexedAddr(c.X))
+	case 0xC9:
+		c.CMP(c.getWithImmediate())
+	case 0xD9:
+		c.CMP(c.getWithAbsoluteIndexedAddr(c.Y))
+	case 0xCD:
+		c.CMP(c.getWithAbsoluteAddress())
+	case 0xDD:
+		c.CMP(c.getWithAbsoluteIndexedAddr(c.X))
+
+	case 0xC0:
+		c.CPY(c.getWithImmediate())
+	case 0xC4:
+		c.CPY(c.getWithZeroPageAddress())
+	case 0xCC:
+		c.CPY(c.getWithAbsoluteAddress())
+
+	case 0xE0:
+		c.CPX(c.getWithImmediate())
+	case 0xE4:
+		c.CPX(c.getWithZeroPageAddress())
+	case 0xEC:
+		c.CPX(c.getWithAbsoluteAddress())
 	}
 }
 

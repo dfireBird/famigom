@@ -159,11 +159,11 @@ func (c *CPU) CPX(value byte) {
 }
 
 func (c *CPU) CPY(value byte) {
-    c.compare(c.Y, value)
+	c.compare(c.Y, value)
 }
 
 func (c *CPU) JMP(addr word) {
-    c.PC = addr
+	c.PC = addr
 }
 
 func (c *CPU) JSR(addr word) {
@@ -178,7 +178,7 @@ func (c *CPU) RTS() {
 
 func (c *CPU) RTI() {
 	flags := c.pullFromStack()
-    pc := c.pullAddrFromStack()
+	pc := c.pullAddrFromStack()
 
 	c.Flags.SetValueFromStack(flags)
 	c.PC = pc
@@ -197,43 +197,107 @@ func (c *CPU) BCC(offset byte) {
 }
 
 func (c *CPU) BEQ(offset byte) {
-    if c.Flags.GetZero() {
+	if c.Flags.GetZero() {
 		c.branch(offset)
 	}
 }
 
 func (c *CPU) BNE(offset byte) {
-    if !c.Flags.GetZero() {
+	if !c.Flags.GetZero() {
 		c.branch(offset)
 	}
 }
 
 func (c *CPU) BMI(offset byte) {
-    if c.Flags.GetNegative() {
+	if c.Flags.GetNegative() {
 		c.branch(offset)
 	}
 }
 
 func (c *CPU) BPL(offset byte) {
-    if !c.Flags.GetNegative() {
+	if !c.Flags.GetNegative() {
 		c.branch(offset)
 	}
 }
 
 func (c *CPU) BVS(offset byte) {
-    if c.Flags.GetOverflow() {
+	if c.Flags.GetOverflow() {
 		c.branch(offset)
 	}
 }
 
 func (c *CPU) BVC(offset byte) {
-    if !c.Flags.GetOverflow() {
+	if !c.Flags.GetOverflow() {
 		c.branch(offset)
 	}
 }
 
+func (c *CPU) PHA() {
+	c.pushIntoStack(c.A)
+}
+
+func (c *CPU) PLA() {
+	c.A = c.pullFromStack()
+}
+
+func (c *CPU) PHP() {
+	c.pushIntoStack(byte(c.Flags) | BREAK_BIT_MASK)
+}
+
+func (c *CPU) PLP() {
+	c.Flags.SetValueFromStack(c.pullFromStack())
+}
+
+func (c *CPU) TXS() {
+	c.SP = c.X
+}
+
+func (c *CPU) TSX() {
+	c.X = c.SP
+
+	c.Flags.SetZero(c.X == 0)
+	c.Flags.SetNegative(isNegative(c.X))
+}
+
+func (c *CPU) CLC() {
+	c.Flags.SetCarry(false)
+}
+
+func (c *CPU) CLD() {
+	c.Flags.SetDecimal(false)
+}
+
+func (c *CPU) CLI() {
+	c.Flags.SetInterruptDisable(false)
+}
+
+func (c *CPU) CLV() {
+	c.Flags.SetOverflow(false)
+}
+
+func (c *CPU) SEC() {
+	c.Flags.SetCarry(true)
+}
+
+func (c *CPU) SED() {
+	c.Flags.SetDecimal(true)
+}
+
+func (c *CPU) SEI() {
+	c.Flags.SetInterruptDisable(true)
+}
+
+func (c *CPU) NOP() {}
+
+func (c *CPU) JAM() {
+	// FIXME: It should set a variable in CPU so that CPU runs but doesn't
+	// execute instructions only poll for hardware interupts
+	c.isJammed = true
+	panic("JAM instruction")
+}
+
 func (c *CPU) branch(offset byte) {
-    signedOffset := int32(int8(offset))
+	signedOffset := int32(int8(offset))
 	c.PC = uint16(int32(c.PC) + signedOffset)
 }
 
@@ -326,7 +390,7 @@ func (c *CPU) pushAddrIntoStack(value word) {
 }
 
 func (c *CPU) pullAddrFromStack() word {
-    lo := c.pullFromStack()
+	lo := c.pullFromStack()
 	hi := c.pullFromStack()
 
 	return joinBytesToWord(lo, hi)

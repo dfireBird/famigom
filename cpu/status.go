@@ -22,6 +22,8 @@ const (
 
 	CARRY_SHIFT        = 0
 	CARRY_BIT_MASK     = 0b0000_0001
+
+	INITIAL_STATUS = 0b0010_0000
 )
 
 func not(value byte) byte {

@@ -23,6 +23,7 @@ type CPU struct {
 
 	// Only used in GetXXXAddr funtions for memory write instructions
 	currentGetAddr word
+	isJammed bool
 }
 
 func New() CPU {
@@ -30,6 +31,12 @@ func New() CPU {
 		X: 0x0,
 		Y: 0x0,
 		A: 0x0,
+
+		Flags: status(INITIAL_STATUS),
+		SP: 0xFF,
+		PC: 0x00,
+
+		// other fields default value as per go spec is fine
 	}
 }
 
@@ -239,6 +246,10 @@ func (c *CPU) Step() {
 		c.TXA()
 	case 0x98:
 		c.TYA()
+	case 0x9A:
+		c.TXS()
+	case 0xBA:
+		c.TSX()
 
 	case 0x06:
 		c.ASL(c.getWithZeroPageAddress(), setResultFactory(c))
@@ -341,6 +352,36 @@ func (c *CPU) Step() {
 		c.JSR(c.getAbsoluteAddr())
 	case 0x60:
 		c.RTS()
+
+	case 0x48:
+		c.PHA()
+	case 0x08:
+		c.PHP()
+	case 0x68:
+		c.PLA()
+	case 0x28:
+		c.PLP()
+
+	case 0x18:
+		c.CLC()
+	case 0x58:
+		c.CLI()
+	case 0xB8:
+		c.CLV()
+	case 0xD8:
+		c.CLD()
+	case 0x38:
+		c.SEC()
+	case 0x78:
+		c.SEI()
+	case 0xF8:
+		c.SED()
+
+	case 0xEA:
+		c.NOP()
+
+	default:
+		c.JAM()
 	}
 }
 

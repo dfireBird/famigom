@@ -1,6 +1,12 @@
 package program
 
-import "bytes"
+import (
+	"bytes"
+	"log"
+	"os"
+)
+
+var logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 
 type NametableArrangement int
 
@@ -24,37 +30,28 @@ type Program struct {
 	PrgRomBankSize byte
 	ChrRomBankSize byte
 
+	NametableArrangement NametableArrangement
+
 	PrgRom []byte
 	ChrRom []byte
-
-	// Not used for now but still parsed
-	nametableArrangement         NametableArrangement
-	isbatteryBackedRam           bool
-	isTrainerPresent             bool
-	isAlternativeNameTableLayout bool
-	isVSUnisystem                bool
-
-	isPlaychoice      bool
-	playchoiceInstRom []byte
-	playchoiceProm    []byte
 }
 
-func Parse(fileData []byte) (bool, *Program) {
+func Parse(romData []byte) (bool, *Program) {
 	seekIdx := uint(0)
 
-	if nesHeader := fileData[:4]; !bytes.Equal(nesHeader, NES_HEADER) {
+	if nesHeader := romData[:4]; !bytes.Equal(nesHeader, NES_HEADER) {
 		return false, nil
 	}
 	seekIdx += 4
 
-	PrgRomBankSize := fileData[seekIdx]
+	PrgRomBankSize := romData[seekIdx]
 	seekIdx += 1
-	ChrRomBankSize := fileData[seekIdx]
+	ChrRomBankSize := romData[seekIdx]
 	seekIdx += 1
 
-	flags6 := fileData[seekIdx]
+	flags6 := romData[seekIdx]
 	seekIdx += 1
-	flags7 := fileData[seekIdx]
+	flags7 := romData[seekIdx]
 	seekIdx += 1
 
 	// skipping bytes from 9 - 16
@@ -64,6 +61,19 @@ func Parse(fileData []byte) (bool, *Program) {
 		return false, nil
 	}
 
+	mapperLo := flags6 & 0xF0
+	mapperHi := flags7 & 0xF0
+
+	Mapper := mapperHi | (mapperLo >> 4)
+
+	nametableArrangement := NametableArrangement(flags6 & 0x01)
+
+	logger.Printf("Reading Header")
+	logger.Printf("PRG ROM Bank Size %d", PrgRomBankSize)
+	logger.Printf("CHR ROM Bank Size %d", ChrRomBankSize)
+	logger.Printf("Mapper #%d", Mapper)
+	logger.Printf("Name Table Mirroring %s", nametableArrangement.toMirroringString())
+
 	isTrainerPresent := (flags6 & 0x04) == 0x04
 	if isTrainerPresent {
 		// we are ignoring trainer data for now
@@ -72,50 +82,36 @@ func Parse(fileData []byte) (bool, *Program) {
 	}
 
 	prgRomSize := (PRG_ROM_BANK_UNIT_SIZE * uint(PrgRomBankSize))
-	PrgRom := fileData[seekIdx : seekIdx+prgRomSize]
+	PrgRom := romData[seekIdx : seekIdx+prgRomSize]
 	seekIdx += prgRomSize
 
 	chrRomSize := (CHR_ROM_BANK_UNIT_SIZE * uint(ChrRomBankSize))
-	ChrRom := fileData[seekIdx : seekIdx+chrRomSize]
+	ChrRom := romData[seekIdx : seekIdx+chrRomSize]
 	seekIdx += chrRomSize
 
 	isPlaychoice := (flags7 & 0x02) == 0x02
-	var playchoiceProm []byte
-	var playchoiceInstRom []byte
 	if isPlaychoice {
-		playchoiceInstRom = fileData[seekIdx : seekIdx+PLAYCHOICE_INST_ROM_SIZE]
 		seekIdx += PLAYCHOICE_INST_ROM_SIZE
-
-		playchoiceProm = fileData[seekIdx : seekIdx+PLAYCHOICE_PROM_SIZE]
 		seekIdx += PLAYCHOICE_PROM_SIZE
 	}
 
-	mapperLo := flags6 & 0xF0
-	mapperHi := flags7 & 0xF0
-
-	Mapper := mapperHi | (mapperLo >> 4)
-
-	nametableArrangement := NametableArrangement(flags6 & 0x01)
-	isbatteryBackedRam := (flags6 & 0x02) == 0x02
-	isAlternativeNameTableLayout := (flags6 & 0x08) == 0x08
-
-	isVSUnisystem := (flags7 & 0x01) == 0x01
-
-	program := Program {
-		Mapper:                       Mapper,
-		PrgRomBankSize:               PrgRomBankSize,
-		ChrRomBankSize:               ChrRomBankSize,
-		PrgRom:                       PrgRom,
-		ChrRom:                       ChrRom,
-		nametableArrangement:         nametableArrangement,
-		isbatteryBackedRam:           isbatteryBackedRam,
-		isTrainerPresent:             isTrainerPresent,
-		isAlternativeNameTableLayout: isAlternativeNameTableLayout,
-		isVSUnisystem:                isVSUnisystem,
-		isPlaychoice:                 isPlaychoice,
-		playchoiceInstRom:            playchoiceInstRom,
-		playchoiceProm:               playchoiceProm,
+	logger.Printf("Read %d bytes of data", seekIdx)
+	program := Program{
+		Mapper:               Mapper,
+		PrgRomBankSize:       PrgRomBankSize,
+		ChrRomBankSize:       ChrRomBankSize,
+		PrgRom:               PrgRom,
+		ChrRom:               ChrRom,
+		NametableArrangement: nametableArrangement,
 	}
 
 	return true, &program
+}
+
+func (n NametableArrangement) toMirroringString() string {
+	if n == Vertical {
+		return "Horizontal"
+	} else {
+		return "Vertical"
+	}
 }

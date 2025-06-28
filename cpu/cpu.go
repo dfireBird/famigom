@@ -49,339 +49,339 @@ func (c *CPU) Step() {
 	c.PC++
 	switch opcode {
 	case 0x00:
-		c.BRK()
+		c.i_BRK()
 	case 0x40:
-		c.RTI()
+		c.i_RTI()
 
 	case 0x01:
-		c.ORA(c.getWithXIndexIndirectAddr())
+		c.i_ORA(c.getWithXIndexIndirectAddr())
 	case 0x11:
-		c.ORA(c.getWithIndirectYIndexAddr())
+		c.i_ORA(c.getWithIndirectYIndexAddr())
 	case 0x05:
-		c.ORA(c.getWithZeroPageAddress())
+		c.i_ORA(c.getWithZeroPageAddress())
 	case 0x15:
-		c.ORA(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_ORA(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x09:
-		c.ORA(c.getWithImmediate())
+		c.i_ORA(c.getWithImmediate())
 	case 0x19:
-		c.ORA(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_ORA(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0x0D:
-		c.ORA(c.getWithAbsoluteAddress())
+		c.i_ORA(c.getWithAbsoluteAddress())
 	case 0x1D:
-		c.ORA(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_ORA(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0x21:
-		c.AND(c.getWithXIndexIndirectAddr())
+		c.i_AND(c.getWithXIndexIndirectAddr())
 	case 0x31:
-		c.AND(c.getWithIndirectYIndexAddr())
+		c.i_AND(c.getWithIndirectYIndexAddr())
 	case 0x25:
-		c.AND(c.getWithZeroPageAddress())
+		c.i_AND(c.getWithZeroPageAddress())
 	case 0x35:
-		c.AND(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_AND(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x29:
-		c.AND(c.getWithImmediate())
+		c.i_AND(c.getWithImmediate())
 	case 0x39:
-		c.AND(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_AND(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0x2D:
-		c.AND(c.getWithAbsoluteAddress())
+		c.i_AND(c.getWithAbsoluteAddress())
 	case 0x3D:
-		c.AND(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_AND(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0x41:
-		c.EOR(c.getWithXIndexIndirectAddr())
+		c.i_EOR(c.getWithXIndexIndirectAddr())
 	case 0x51:
-		c.EOR(c.getWithIndirectYIndexAddr())
+		c.i_EOR(c.getWithIndirectYIndexAddr())
 	case 0x45:
-		c.EOR(c.getWithZeroPageAddress())
+		c.i_EOR(c.getWithZeroPageAddress())
 	case 0x55:
-		c.EOR(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_EOR(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x49:
-		c.EOR(c.getWithImmediate())
+		c.i_EOR(c.getWithImmediate())
 	case 0x59:
-		c.EOR(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_EOR(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0x4D:
-		c.EOR(c.getWithAbsoluteAddress())
+		c.i_EOR(c.getWithAbsoluteAddress())
 	case 0x5D:
-		c.EOR(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_EOR(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0x24:
-		c.BIT(c.getWithZeroPageAddress())
+		c.i_BIT(c.getWithZeroPageAddress())
 	case 0x2C:
-		c.BIT(c.getWithAbsoluteAddress())
+		c.i_BIT(c.getWithAbsoluteAddress())
 
 	case 0x61:
-		c.ADC(c.getWithXIndexIndirectAddr())
+		c.i_ADC(c.getWithXIndexIndirectAddr())
 	case 0x71:
-		c.ADC(c.getWithIndirectYIndexAddr())
+		c.i_ADC(c.getWithIndirectYIndexAddr())
 	case 0x65:
-		c.ADC(c.getWithZeroPageAddress())
+		c.i_ADC(c.getWithZeroPageAddress())
 	case 0x75:
-		c.ADC(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_ADC(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x69:
-		c.ADC(c.getWithImmediate())
+		c.i_ADC(c.getWithImmediate())
 	case 0x79:
-		c.ADC(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_ADC(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0x6D:
-		c.ADC(c.getWithAbsoluteAddress())
+		c.i_ADC(c.getWithAbsoluteAddress())
 	case 0x7D:
-		c.ADC(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_ADC(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0xE1:
-		c.SBC(c.getWithXIndexIndirectAddr())
+		c.i_SBC(c.getWithXIndexIndirectAddr())
 	case 0xF1:
-		c.SBC(c.getWithIndirectYIndexAddr())
+		c.i_SBC(c.getWithIndirectYIndexAddr())
 	case 0xE5:
-		c.SBC(c.getWithZeroPageAddress())
+		c.i_SBC(c.getWithZeroPageAddress())
 	case 0xF5:
-		c.SBC(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_SBC(c.getWithZeroPageIndexedAddr(c.X))
 	case 0xE9:
-		c.SBC(c.getWithImmediate())
+		c.i_SBC(c.getWithImmediate())
 	case 0xF9:
-		c.SBC(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_SBC(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0xED:
-		c.SBC(c.getWithAbsoluteAddress())
+		c.i_SBC(c.getWithAbsoluteAddress())
 	case 0xFD:
-		c.SBC(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_SBC(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0xE6:
-		c.INC(c.getWithZeroPageAddress(), c.writeMemory)
+		c.i_INC(c.getWithZeroPageAddress(), c.writeMemory)
 	case 0xEE:
-		c.INC(c.getWithAbsoluteAddress(), c.writeMemory)
+		c.i_INC(c.getWithAbsoluteAddress(), c.writeMemory)
 	case 0xF6:
-		c.INC(c.getWithZeroPageIndexedAddr(c.X), c.writeMemory)
+		c.i_INC(c.getWithZeroPageIndexedAddr(c.X), c.writeMemory)
 	case 0xFE:
-		c.INC(c.getWithAbsoluteIndexedAddr(c.X), c.writeMemory)
+		c.i_INC(c.getWithAbsoluteIndexedAddr(c.X), c.writeMemory)
 
 	case 0xC6:
-		c.DEC(c.getWithZeroPageAddress(), c.writeMemory)
+		c.i_DEC(c.getWithZeroPageAddress(), c.writeMemory)
 	case 0xCE:
-		c.DEC(c.getWithAbsoluteAddress(), c.writeMemory)
+		c.i_DEC(c.getWithAbsoluteAddress(), c.writeMemory)
 	case 0xD6:
-		c.DEC(c.getWithZeroPageIndexedAddr(c.X), c.writeMemory)
+		c.i_DEC(c.getWithZeroPageIndexedAddr(c.X), c.writeMemory)
 	case 0xDE:
-		c.DEC(c.getWithAbsoluteIndexedAddr(c.X), c.writeMemory)
+		c.i_DEC(c.getWithAbsoluteIndexedAddr(c.X), c.writeMemory)
 
 	case 0xE8:
-		c.INX()
+		c.i_INX()
 	case 0xC8:
-		c.INY()
+		c.i_INY()
 	case 0xCA:
-		c.DEX()
+		c.i_DEX()
 	case 0x88:
-		c.DEY()
+		c.i_DEY()
 
 	case 0x81:
-		c.STA(c.getWithXIndexIndirectAddr())
+		c.i_STA(c.getWithXIndexIndirectAddr())
 	case 0x91:
-		c.STA(c.getWithIndirectYIndexAddr())
+		c.i_STA(c.getWithIndirectYIndexAddr())
 	case 0x85:
-		c.STA(c.getWithZeroPageAddress())
+		c.i_STA(c.getWithZeroPageAddress())
 	case 0x95:
-		c.STA(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_STA(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x99:
-		c.STA(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_STA(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0x8D:
-		c.STA(c.getWithAbsoluteAddress())
+		c.i_STA(c.getWithAbsoluteAddress())
 	case 0x9D:
-		c.STA(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_STA(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0x86:
-		c.STX(c.getWithZeroPageAddress())
+		c.i_STX(c.getWithZeroPageAddress())
 	case 0x96:
-		c.STX(c.getWithZeroPageIndexedAddr(c.Y))
+		c.i_STX(c.getWithZeroPageIndexedAddr(c.Y))
 	case 0x8E:
-		c.STX(c.getWithAbsoluteAddress())
+		c.i_STX(c.getWithAbsoluteAddress())
 
 	case 0x84:
-		c.STY(c.getWithZeroPageAddress())
+		c.i_STY(c.getWithZeroPageAddress())
 	case 0x94:
-		c.STY(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_STY(c.getWithZeroPageIndexedAddr(c.X))
 	case 0x8C:
-		c.STY(c.getWithAbsoluteAddress())
+		c.i_STY(c.getWithAbsoluteAddress())
 
 	case 0xA1:
-		c.LDA(c.getWithXIndexIndirectAddr())
+		c.i_LDA(c.getWithXIndexIndirectAddr())
 	case 0xB1:
-		c.LDA(c.getWithIndirectYIndexAddr())
+		c.i_LDA(c.getWithIndirectYIndexAddr())
 	case 0xA5:
-		c.LDA(c.getWithZeroPageAddress())
+		c.i_LDA(c.getWithZeroPageAddress())
 	case 0xB5:
-		c.LDA(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_LDA(c.getWithZeroPageIndexedAddr(c.X))
 	case 0xA9:
-		c.LDA(c.getWithImmediate())
+		c.i_LDA(c.getWithImmediate())
 	case 0xB9:
-		c.LDA(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_LDA(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0xAD:
-		c.LDA(c.getWithAbsoluteAddress())
+		c.i_LDA(c.getWithAbsoluteAddress())
 	case 0xBD:
-		c.LDA(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_LDA(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0xA2:
-		c.LDX(c.getWithImmediate())
+		c.i_LDX(c.getWithImmediate())
 	case 0xA6:
-		c.LDX(c.getWithZeroPageAddress())
+		c.i_LDX(c.getWithZeroPageAddress())
 	case 0xB6:
-		c.LDX(c.getWithZeroPageIndexedAddr(c.Y))
+		c.i_LDX(c.getWithZeroPageIndexedAddr(c.Y))
 	case 0xAE:
-		c.LDX(c.getWithAbsoluteAddress())
+		c.i_LDX(c.getWithAbsoluteAddress())
 	case 0xBE:
-		c.LDX(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_LDX(c.getWithAbsoluteIndexedAddr(c.Y))
 
 	case 0xA0:
-		c.LDY(c.getWithImmediate())
+		c.i_LDY(c.getWithImmediate())
 	case 0xA4:
-		c.LDX(c.getWithZeroPageAddress())
+		c.i_LDX(c.getWithZeroPageAddress())
 	case 0xB4:
-		c.LDY(c.getWithZeroPageIndexedAddr(c.Y))
+		c.i_LDY(c.getWithZeroPageIndexedAddr(c.Y))
 	case 0xAC:
-		c.LDY(c.getWithAbsoluteAddress())
+		c.i_LDY(c.getWithAbsoluteAddress())
 	case 0xBC:
-		c.LDY(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_LDY(c.getWithAbsoluteIndexedAddr(c.Y))
 
 	case 0xAA:
-		c.TAX()
+		c.i_TAX()
 	case 0xA8:
-		c.TAY()
+		c.i_TAY()
 	case 0x8A:
-		c.TXA()
+		c.i_TXA()
 	case 0x98:
-		c.TYA()
+		c.i_TYA()
 	case 0x9A:
-		c.TXS()
+		c.i_TXS()
 	case 0xBA:
-		c.TSX()
+		c.i_TSX()
 
 	case 0x06:
-		c.ASL(c.getWithZeroPageAddress(), setResultFactory(c))
+		c.i_ASL(c.getWithZeroPageAddress(), setResultFactory(c))
 	case 0x16:
-		c.ASL(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
+		c.i_ASL(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
 	case 0x0A:
-		c.ASL(c.A, func(v byte) { c.A = v })
+		c.i_ASL(c.A, func(v byte) { c.A = v })
 	case 0x0E:
-		c.ASL(c.getWithAbsoluteAddress(), setResultFactory(c))
+		c.i_ASL(c.getWithAbsoluteAddress(), setResultFactory(c))
 	case 0x1E:
-		c.ASL(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+		c.i_ASL(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
 
 	case 0x46:
-		c.LSR(c.getWithZeroPageAddress(), setResultFactory(c))
+		c.i_LSR(c.getWithZeroPageAddress(), setResultFactory(c))
 	case 0x56:
-		c.LSR(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
+		c.i_LSR(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
 	case 0x4A:
-		c.LSR(c.A, func(v byte) { c.A = v })
+		c.i_LSR(c.A, func(v byte) { c.A = v })
 	case 0x4E:
-		c.LSR(c.getWithAbsoluteAddress(), setResultFactory(c))
+		c.i_LSR(c.getWithAbsoluteAddress(), setResultFactory(c))
 	case 0x5E:
-		c.LSR(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+		c.i_LSR(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
 
 	case 0x26:
-		c.ROL(c.getWithZeroPageAddress(), setResultFactory(c))
+		c.i_ROL(c.getWithZeroPageAddress(), setResultFactory(c))
 	case 0x36:
-		c.ROL(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
+		c.i_ROL(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
 	case 0x2A:
-		c.ROL(c.A, func(v byte) { c.A = v })
+		c.i_ROL(c.A, func(v byte) { c.A = v })
 	case 0x2E:
-		c.ROL(c.getWithAbsoluteAddress(), setResultFactory(c))
+		c.i_ROL(c.getWithAbsoluteAddress(), setResultFactory(c))
 	case 0x3E:
-		c.ROL(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+		c.i_ROL(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
 
 	case 0x66:
-		c.ROR(c.getWithZeroPageAddress(), setResultFactory(c))
+		c.i_ROR(c.getWithZeroPageAddress(), setResultFactory(c))
 	case 0x76:
-		c.ROR(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
+		c.i_ROR(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
 	case 0x6A:
-		c.ROR(c.A, func(v byte) { c.A = v })
+		c.i_ROR(c.A, func(v byte) { c.A = v })
 	case 0x6E:
-		c.ROR(c.getWithAbsoluteAddress(), setResultFactory(c))
+		c.i_ROR(c.getWithAbsoluteAddress(), setResultFactory(c))
 	case 0x7E:
-		c.ROR(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+		c.i_ROR(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
 
 	case 0xC1:
-		c.CMP(c.getWithXIndexIndirectAddr())
+		c.i_CMP(c.getWithXIndexIndirectAddr())
 	case 0xD1:
-		c.CMP(c.getWithIndirectYIndexAddr())
+		c.i_CMP(c.getWithIndirectYIndexAddr())
 	case 0xC5:
-		c.CMP(c.getWithZeroPageAddress())
+		c.i_CMP(c.getWithZeroPageAddress())
 	case 0xD5:
-		c.CMP(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_CMP(c.getWithZeroPageIndexedAddr(c.X))
 	case 0xC9:
-		c.CMP(c.getWithImmediate())
+		c.i_CMP(c.getWithImmediate())
 	case 0xD9:
-		c.CMP(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_CMP(c.getWithAbsoluteIndexedAddr(c.Y))
 	case 0xCD:
-		c.CMP(c.getWithAbsoluteAddress())
+		c.i_CMP(c.getWithAbsoluteAddress())
 	case 0xDD:
-		c.CMP(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_CMP(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0xC0:
-		c.CPY(c.getWithImmediate())
+		c.i_CPY(c.getWithImmediate())
 	case 0xC4:
-		c.CPY(c.getWithZeroPageAddress())
+		c.i_CPY(c.getWithZeroPageAddress())
 	case 0xCC:
-		c.CPY(c.getWithAbsoluteAddress())
+		c.i_CPY(c.getWithAbsoluteAddress())
 
 	case 0xE0:
-		c.CPX(c.getWithImmediate())
+		c.i_CPX(c.getWithImmediate())
 	case 0xE4:
-		c.CPX(c.getWithZeroPageAddress())
+		c.i_CPX(c.getWithZeroPageAddress())
 	case 0xEC:
-		c.CPX(c.getWithAbsoluteAddress())
+		c.i_CPX(c.getWithAbsoluteAddress())
 
 	case 0x10:
-		c.BPL(c.getWithRelative())
+		c.i_BPL(c.getWithRelative())
 	case 0x30:
-		c.BMI(c.getWithRelative())
+		c.i_BMI(c.getWithRelative())
 	case 0x50:
-		c.BVC(c.getWithRelative())
+		c.i_BVC(c.getWithRelative())
 	case 0x70:
-		c.BVS(c.getWithRelative())
+		c.i_BVS(c.getWithRelative())
 	case 0x90:
-		c.BCC(c.getWithRelative())
+		c.i_BCC(c.getWithRelative())
 	case 0xB0:
-		c.BCS(c.getWithRelative())
+		c.i_BCS(c.getWithRelative())
 	case 0xD0:
-		c.BNE(c.getWithRelative())
+		c.i_BNE(c.getWithRelative())
 	case 0xF0:
-		c.BEQ(c.getWithRelative())
+		c.i_BEQ(c.getWithRelative())
 
 	case 0x4C:
-		c.JMP(c.getAbsoluteAddr())
+		c.i_JMP(c.getAbsoluteAddr())
 	case 0x6C:
-		c.JMP(c.getIndirectAddr())
+		c.i_JMP(c.getIndirectAddr())
 
 	case 0x20:
-		c.JSR(c.getAbsoluteAddr())
+		c.i_JSR(c.getAbsoluteAddr())
 	case 0x60:
-		c.RTS()
+		c.i_RTS()
 
 	case 0x48:
-		c.PHA()
+		c.i_PHA()
 	case 0x08:
-		c.PHP()
+		c.i_PHP()
 	case 0x68:
-		c.PLA()
+		c.i_PLA()
 	case 0x28:
-		c.PLP()
+		c.i_PLP()
 
 	case 0x18:
-		c.CLC()
+		c.i_CLC()
 	case 0x58:
-		c.CLI()
+		c.i_CLI()
 	case 0xB8:
-		c.CLV()
+		c.i_CLV()
 	case 0xD8:
-		c.CLD()
+		c.i_CLD()
 	case 0x38:
-		c.SEC()
+		c.i_SEC()
 	case 0x78:
-		c.SEI()
+		c.i_SEI()
 	case 0xF8:
-		c.SED()
+		c.i_SED()
 
 	case 0xEA:
-		c.NOP()
+		c.i_NOP()
 
 	default:
-		c.JAM()
+		c.i_JAM()
 	}
 }
 

@@ -1,10 +1,12 @@
 package cpu
 
+import (
+	. "github.com/dfirebird/famigom/types"
+)
+
 const (
 	maxMemory = (1 << 16) - 1
 )
-
-type word = uint16
 
 type CPU struct {
 	// General purpose registers
@@ -15,14 +17,14 @@ type CPU struct {
 	// Special Registers
 	Flags status
 	SP    byte
-	PC    word
+	PC    Word
 
 	Memory [maxMemory]byte
 
 	// Internal to emulator
 
 	// Only used in GetXXXAddr funtions for memory write instructions
-	currentGetAddr word
+	currentGetAddr Word
 	isJammed bool
 }
 
@@ -385,33 +387,33 @@ func (c *CPU) Step() {
 	}
 }
 
-func (c *CPU) readMemory(addr word) byte {
+func (c *CPU) readMemory(addr Word) byte {
 	return c.Memory[addr]
 }
 
-func (c *CPU) writeMemory(addr word, value byte) {
+func (c *CPU) writeMemory(addr Word, value byte) {
 	c.Memory[addr] = value
 }
 
 func (c *CPU) pushIntoStack(value byte) {
-	effectiveStackAddr := 0x0100 | word(c.SP)
+	effectiveStackAddr := 0x0100 | Word(c.SP)
 	c.writeMemory(effectiveStackAddr, value)
 	c.SP--
 }
 
 func (c *CPU) pullFromStack() byte {
-	effectiveStackAddr := 0x0100 | word(c.SP)
+	effectiveStackAddr := 0x0100 | Word(c.SP)
 	value := c.readMemory(effectiveStackAddr)
 	c.SP++
 	return value
 }
 
-func joinBytesToWord(lo, hi byte) word {
+func joinBytesToWord(lo, hi byte) Word {
 	const ADDR_SHIFT = 8
-	return word(lo) | word(hi)<<ADDR_SHIFT
+	return Word(lo) | Word(hi)<<ADDR_SHIFT
 }
 
-func splitWordToByte(w word) (byte, byte) {
+func splitWordToByte(w Word) (byte, byte) {
 	const (
 		LO_ADDR_MASK = 0x00FF
 		HI_ADDR_MASK = 0xFF00

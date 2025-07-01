@@ -1,5 +1,9 @@
 package cpu
 
+import (
+	. "github.com/dfirebird/famigom/types"
+)
+
 const (
 	ZERO_PAGE_MAX = 256
 )
@@ -17,13 +21,13 @@ func (c *CPU) getWithZeroPageAddress() byte {
 }
 
 func (c *CPU) getWithAbsoluteIndexedAddr(idx byte) byte {
-	addr := c.getAbsoluteAddr() + word(idx)
+	addr := c.getAbsoluteAddr() + Word(idx)
 	c.currentGetAddr = addr
 	return c.readMemory(addr)
 }
 
 func (c *CPU) getWithZeroPageIndexedAddr(idx byte) byte {
-	addr := (c.getZeroPageAddr() + word(idx)) % ZERO_PAGE_MAX
+	addr := (c.getZeroPageAddr() + Word(idx)) % ZERO_PAGE_MAX
 	c.currentGetAddr = addr
 	return c.readMemory(addr)
 }
@@ -32,8 +36,8 @@ func (c *CPU) getWithXIndexIndirectAddr() byte {
 	// The mode uses a zero page address
 	addr := c.getZeroPageAddr()
 
-	lo := c.readMemory((addr + word(c.X)) % ZERO_PAGE_MAX)
-	hi := c.readMemory((addr + word(c.X) + 1) % ZERO_PAGE_MAX)
+	lo := c.readMemory((addr + Word(c.X)) % ZERO_PAGE_MAX)
+	hi := c.readMemory((addr + Word(c.X) + 1) % ZERO_PAGE_MAX)
 
 	effectiveAddr := joinBytesToWord(lo, hi)
 	c.currentGetAddr = effectiveAddr
@@ -47,7 +51,7 @@ func (c *CPU) getWithIndirectYIndexAddr() byte {
 	lo := c.readMemory(addr)
 	hi := c.readMemory((addr + 1) % ZERO_PAGE_MAX)
 
-	effectiveAddr := joinBytesToWord(lo, hi) + word(c.Y)
+	effectiveAddr := joinBytesToWord(lo, hi) + Word(c.Y)
 	c.currentGetAddr = effectiveAddr
 	return c.readMemory(effectiveAddr)
 }
@@ -69,7 +73,7 @@ func (c *CPU) getWithRelative() byte {
 // absolute address from the ROM and using that address
 // to retrieve from memory the effective address
 // Only used in JMP
-func (c *CPU) getIndirectAddr() word {
+func (c *CPU) getIndirectAddr() Word {
 	lo := c.readMemory(c.PC)
 	c.PC++
 	hi := c.readMemory(c.PC)
@@ -82,7 +86,7 @@ func (c *CPU) getIndirectAddr() word {
 	return joinBytesToWord(effectiveLo, effectiveHi)
 }
 
-func (c *CPU) getAbsoluteAddr() word {
+func (c *CPU) getAbsoluteAddr() Word {
 	lo := c.readMemory(c.PC)
 	c.PC++
 	hi := c.readMemory(c.PC)
@@ -91,7 +95,7 @@ func (c *CPU) getAbsoluteAddr() word {
 	return joinBytesToWord(lo, hi)
 }
 
-func (c *CPU) getZeroPageAddr() word {
+func (c *CPU) getZeroPageAddr() Word {
 	lo := c.readMemory(c.PC)
 	c.PC++
 

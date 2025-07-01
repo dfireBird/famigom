@@ -1,5 +1,9 @@
 package cpu
 
+import (
+	. "github.com/dfirebird/famigom/types"
+)
+
 const (
 	BIT_7_NEG_SET = 0b1000_0000
 	BIT_8_OVL_SET = 0x100
@@ -54,7 +58,7 @@ func (c *CPU) i_SBC(op byte) {
 	c.add(^op)
 }
 
-func (c *CPU) i_INC(op byte, memSet func(word, byte)) {
+func (c *CPU) i_INC(op byte, memSet func(Word, byte)) {
 	res := c.increment(op)
 	memSet(c.currentGetAddr, res)
 }
@@ -67,7 +71,7 @@ func (c *CPU) i_INY() {
 	c.Y = c.increment(c.Y)
 }
 
-func (c *CPU) i_DEC(op byte, memSet func(word, byte)) {
+func (c *CPU) i_DEC(op byte, memSet func(Word, byte)) {
 	res := c.decrement(op)
 	memSet(c.currentGetAddr, res)
 }
@@ -162,11 +166,11 @@ func (c *CPU) i_CPY(value byte) {
 	c.compare(c.Y, value)
 }
 
-func (c *CPU) i_JMP(addr word) {
+func (c *CPU) i_JMP(addr Word) {
 	c.PC = addr
 }
 
-func (c *CPU) i_JSR(addr word) {
+func (c *CPU) i_JSR(addr Word) {
 	c.pushAddrIntoStack(c.PC)
 	c.PC = addr
 }
@@ -373,7 +377,7 @@ func (c *CPU) add(op byte) {
 	result := c.A + op + carry
 
 	// Masking the 8th bit in 16bit value for carry
-	resultAs16Bit := word(c.A) + word(op) + word(carry)
+	resultAs16Bit := Word(c.A) + Word(op) + Word(carry)
 	c.Flags.SetCarry((resultAs16Bit & BIT_8_OVL_SET) == BIT_8_OVL_SET)
 
 	c.Flags.SetZero(result == 0)
@@ -383,13 +387,13 @@ func (c *CPU) add(op byte) {
 	c.A = result
 }
 
-func (c *CPU) pushAddrIntoStack(value word) {
+func (c *CPU) pushAddrIntoStack(value Word) {
 	lo, hi := splitWordToByte(value)
 	c.pushIntoStack(lo)
 	c.pushIntoStack(hi)
 }
 
-func (c *CPU) pullAddrFromStack() word {
+func (c *CPU) pullAddrFromStack() Word {
 	lo := c.pullFromStack()
 	hi := c.pullFromStack()
 

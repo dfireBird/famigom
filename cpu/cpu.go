@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	maxMemory = (1 << 16) - 1
+	maxMemory = (1 << 16)
 )
 
 type CPU struct {
@@ -15,7 +15,7 @@ type CPU struct {
 	A byte
 
 	// Special Registers
-	Flags status
+	Flags Status
 	SP    byte
 	PC    Word
 
@@ -34,7 +34,7 @@ func New() CPU {
 		Y: 0x0,
 		A: 0x0,
 
-		Flags: status(INITIAL_STATUS),
+		Flags: Status(INITIAL_STATUS),
 		SP: 0xFF,
 		PC: 0x00,
 
@@ -44,10 +44,10 @@ func New() CPU {
 
 func (c *CPU) Step() {
 	setResultFactory := func(c *CPU) func(byte) {
-		return func(v byte) { c.writeMemory(c.currentGetAddr, v) }
+		return func(v byte) { c.WriteMemory(c.currentGetAddr, v) }
 	}
 
-	opcode := c.readMemory(c.PC)
+	opcode := c.ReadMemory(c.PC)
 	c.PC++
 	switch opcode {
 	case 0x00:
@@ -146,22 +146,22 @@ func (c *CPU) Step() {
 		c.i_SBC(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0xE6:
-		c.i_INC(c.getWithZeroPageAddress(), c.writeMemory)
+		c.i_INC(c.getWithZeroPageAddress(), c.WriteMemory)
 	case 0xEE:
-		c.i_INC(c.getWithAbsoluteAddress(), c.writeMemory)
+		c.i_INC(c.getWithAbsoluteAddress(), c.WriteMemory)
 	case 0xF6:
-		c.i_INC(c.getWithZeroPageIndexedAddr(c.X), c.writeMemory)
+		c.i_INC(c.getWithZeroPageIndexedAddr(c.X), c.WriteMemory)
 	case 0xFE:
-		c.i_INC(c.getWithAbsoluteIndexedAddr(c.X), c.writeMemory)
+		c.i_INC(c.getWithAbsoluteIndexedAddr(c.X), c.WriteMemory)
 
 	case 0xC6:
-		c.i_DEC(c.getWithZeroPageAddress(), c.writeMemory)
+		c.i_DEC(c.getWithZeroPageAddress(), c.WriteMemory)
 	case 0xCE:
-		c.i_DEC(c.getWithAbsoluteAddress(), c.writeMemory)
+		c.i_DEC(c.getWithAbsoluteAddress(), c.WriteMemory)
 	case 0xD6:
-		c.i_DEC(c.getWithZeroPageIndexedAddr(c.X), c.writeMemory)
+		c.i_DEC(c.getWithZeroPageIndexedAddr(c.X), c.WriteMemory)
 	case 0xDE:
-		c.i_DEC(c.getWithAbsoluteIndexedAddr(c.X), c.writeMemory)
+		c.i_DEC(c.getWithAbsoluteIndexedAddr(c.X), c.WriteMemory)
 
 	case 0xE8:
 		c.i_INX()
@@ -387,23 +387,23 @@ func (c *CPU) Step() {
 	}
 }
 
-func (c *CPU) readMemory(addr Word) byte {
+func (c *CPU) ReadMemory(addr Word) byte {
 	return c.Memory[addr]
 }
 
-func (c *CPU) writeMemory(addr Word, value byte) {
+func (c *CPU) WriteMemory(addr Word, value byte) {
 	c.Memory[addr] = value
 }
 
 func (c *CPU) pushIntoStack(value byte) {
 	effectiveStackAddr := 0x0100 | Word(c.SP)
-	c.writeMemory(effectiveStackAddr, value)
+	c.WriteMemory(effectiveStackAddr, value)
 	c.SP--
 }
 
 func (c *CPU) pullFromStack() byte {
 	effectiveStackAddr := 0x0100 | Word(c.SP)
-	value := c.readMemory(effectiveStackAddr)
+	value := c.ReadMemory(effectiveStackAddr)
 	c.SP++
 	return value
 }

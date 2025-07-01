@@ -11,53 +11,53 @@ const (
 func (c *CPU) getWithAbsoluteAddress() byte {
 	addr := c.getAbsoluteAddr()
 	c.currentGetAddr = addr
-	return c.readMemory(addr)
+	return c.ReadMemory(addr)
 }
 
 func (c *CPU) getWithZeroPageAddress() byte {
 	addr := c.getZeroPageAddr()
 	c.currentGetAddr = addr
-	return c.readMemory(addr)
+	return c.ReadMemory(addr)
 }
 
 func (c *CPU) getWithAbsoluteIndexedAddr(idx byte) byte {
 	addr := c.getAbsoluteAddr() + Word(idx)
 	c.currentGetAddr = addr
-	return c.readMemory(addr)
+	return c.ReadMemory(addr)
 }
 
 func (c *CPU) getWithZeroPageIndexedAddr(idx byte) byte {
 	addr := (c.getZeroPageAddr() + Word(idx)) % ZERO_PAGE_MAX
 	c.currentGetAddr = addr
-	return c.readMemory(addr)
+	return c.ReadMemory(addr)
 }
 
 func (c *CPU) getWithXIndexIndirectAddr() byte {
 	// The mode uses a zero page address
 	addr := c.getZeroPageAddr()
 
-	lo := c.readMemory((addr + Word(c.X)) % ZERO_PAGE_MAX)
-	hi := c.readMemory((addr + Word(c.X) + 1) % ZERO_PAGE_MAX)
+	lo := c.ReadMemory((addr + Word(c.X)) % ZERO_PAGE_MAX)
+	hi := c.ReadMemory((addr + Word(c.X) + 1) % ZERO_PAGE_MAX)
 
 	effectiveAddr := joinBytesToWord(lo, hi)
 	c.currentGetAddr = effectiveAddr
-	return c.readMemory(effectiveAddr)
+	return c.ReadMemory(effectiveAddr)
 }
 
 func (c *CPU) getWithIndirectYIndexAddr() byte {
 	// The mode uses a zero page address
 	addr := c.getZeroPageAddr()
 
-	lo := c.readMemory(addr)
-	hi := c.readMemory((addr + 1) % ZERO_PAGE_MAX)
+	lo := c.ReadMemory(addr)
+	hi := c.ReadMemory((addr + 1) % ZERO_PAGE_MAX)
 
 	effectiveAddr := joinBytesToWord(lo, hi) + Word(c.Y)
 	c.currentGetAddr = effectiveAddr
-	return c.readMemory(effectiveAddr)
+	return c.ReadMemory(effectiveAddr)
 }
 
 func (c *CPU) getWithImmediate() byte {
-	v := c.readMemory(c.PC)
+	v := c.ReadMemory(c.PC)
 	c.PC++
 	return v
 }
@@ -74,29 +74,29 @@ func (c *CPU) getWithRelative() byte {
 // to retrieve from memory the effective address
 // Only used in JMP
 func (c *CPU) getIndirectAddr() Word {
-	lo := c.readMemory(c.PC)
+	lo := c.ReadMemory(c.PC)
 	c.PC++
-	hi := c.readMemory(c.PC)
+	hi := c.ReadMemory(c.PC)
 	c.PC++
 
 
 	loAddr, hiAddr := joinBytesToWord(lo, hi), joinBytesToWord((lo + 1), hi)
-	effectiveLo := c.readMemory(loAddr)
-	effectiveHi := c.readMemory(hiAddr)
+	effectiveLo := c.ReadMemory(loAddr)
+	effectiveHi := c.ReadMemory(hiAddr)
 	return joinBytesToWord(effectiveLo, effectiveHi)
 }
 
 func (c *CPU) getAbsoluteAddr() Word {
-	lo := c.readMemory(c.PC)
+	lo := c.ReadMemory(c.PC)
 	c.PC++
-	hi := c.readMemory(c.PC)
+	hi := c.ReadMemory(c.PC)
 	c.PC++
 
 	return joinBytesToWord(lo, hi)
 }
 
 func (c *CPU) getZeroPageAddr() Word {
-	lo := c.readMemory(c.PC)
+	lo := c.ReadMemory(c.PC)
 	c.PC++
 
 	return joinBytesToWord(lo, 0x00)

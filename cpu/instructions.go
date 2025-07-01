@@ -99,15 +99,15 @@ func (c *CPU) i_LDY(value byte) {
 // Stores use getXXXAddr functions result as parameter but doesn't use it
 // But uses the currentGetAddr as address value to write to
 func (c *CPU) i_STA(_ byte) {
-	c.writeMemory(c.currentGetAddr, c.A)
+	c.WriteMemory(c.currentGetAddr, c.A)
 }
 
 func (c *CPU) i_STX(_ byte) {
-	c.writeMemory(c.currentGetAddr, c.X)
+	c.WriteMemory(c.currentGetAddr, c.X)
 }
 
 func (c *CPU) i_STY(_ byte) {
-	c.writeMemory(c.currentGetAddr, c.Y)
+	c.WriteMemory(c.currentGetAddr, c.Y)
 }
 
 func (c *CPU) i_TAX() {

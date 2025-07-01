@@ -1,6 +1,6 @@
 package cpu
 
-type status byte
+type Status byte
 
 const (
 	NEGATIVE_SHIFT     = 7
@@ -30,8 +30,8 @@ func not(value byte) byte {
 	return 0b1111_1111 ^ value
 }
 
-func (s *status) SetValueFromStack(value byte) {
-	newStatus := status(value)
+func (s *Status) SetValueFromStack(value byte) {
+	newStatus := Status(value)
 	s.SetCarry(newStatus.GetCarry())
 	s.SetZero(newStatus.GetZero())
 	s.SetInterruptDisable(newStatus.GetInterruptDisable())
@@ -40,55 +40,55 @@ func (s *status) SetValueFromStack(value byte) {
 	s.SetNegative(newStatus.GetNegative())
 }
 
-func (s *status) SetNegative(value bool) {
+func (s *Status) SetNegative(value bool) {
 	s.setXBit(value, NEGATIVE_BIT_MASK)
 }
 
-func (s *status) GetNegative() bool {
+func (s *Status) GetNegative() bool {
 	return s.getXBit(NEGATIVE_BIT_MASK, NEGATIVE_SHIFT)
 }
 
-func (s *status) SetOverflow(value bool) {
+func (s *Status) SetOverflow(value bool) {
 	s.setXBit(value, OVERFLOW_BIT_MASK)
 }
 
-func (s *status) GetOverflow() bool {
+func (s *Status) GetOverflow() bool {
 	return s.getXBit(OVERFLOW_BIT_MASK, OVERFLOW_SHIFT)
 }
 
-func (s *status) SetDecimal(value bool) {
+func (s *Status) SetDecimal(value bool) {
 	s.setXBit(value, DECIMAL_BIT_MASK)
 }
 
-func (s *status) GetDecimal() bool {
+func (s *Status) GetDecimal() bool {
 	return s.getXBit(DECIMAL_BIT_MASK, DECIMAL_SHIFT)
 }
 
-func (s *status) SetInterruptDisable(value bool) {
+func (s *Status) SetInterruptDisable(value bool) {
 	s.setXBit(value, INTERRUPT_BIT_MASK)
 }
 
-func (s *status) GetInterruptDisable() bool {
+func (s *Status) GetInterruptDisable() bool {
 	return s.getXBit(INTERRUPT_BIT_MASK, INTERRUPT_SHIFT)
 }
 
-func (s *status) SetZero(value bool) {
+func (s *Status) SetZero(value bool) {
 	s.setXBit(value, ZERO_BIT_MASK)
 }
 
-func (s *status) GetZero() bool {
+func (s *Status) GetZero() bool {
 	return s.getXBit(ZERO_BIT_MASK, ZERO_SHIFT)
 }
 
-func (s *status) SetCarry(value bool) {
+func (s *Status) SetCarry(value bool) {
 	s.setXBit(value, CARRY_BIT_MASK)
 }
 
-func (s *status) GetCarry() bool {
+func (s *Status) GetCarry() bool {
 	return s.getXBit(CARRY_BIT_MASK, CARRY_SHIFT)
 }
 
-func (s *status) GetCarryNum() byte {
+func (s *Status) GetCarryNum() byte {
 	if s.GetCarry() {
 		return 1
 	} else {
@@ -96,14 +96,14 @@ func (s *status) GetCarryNum() byte {
 	}
 }
 
-func (s *status) setXBit(value bool, mask byte) {
+func (s *Status) setXBit(value bool, mask byte) {
 	if value {
-		*s |= status (mask)
+		*s |= Status (mask)
 	} else {
-		*s &= status (not(mask))
+		*s &= Status (not(mask))
 	}
 }
 
-func (s *status) getXBit(mask, shift byte) bool {
-	return (*s & status(mask)) >> shift == 1
+func (s *Status) getXBit(mask, shift byte) bool {
+	return (*s & Status(mask)) >> shift == 1
 }

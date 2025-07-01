@@ -25,7 +25,7 @@ type CPU struct {
 
 	// Only used in GetXXXAddr funtions for memory write instructions
 	currentGetAddr Word
-	isJammed bool
+	isJammed       bool
 }
 
 func New() CPU {
@@ -35,8 +35,8 @@ func New() CPU {
 		A: 0x0,
 
 		Flags: Status(INITIAL_STATUS),
-		SP: 0xFF,
-		PC: 0x00,
+		SP:    0xFF,
+		PC:    0x00,
 
 		// other fields default value as per go spec is fine
 	}

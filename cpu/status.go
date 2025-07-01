@@ -3,25 +3,25 @@ package cpu
 type Status byte
 
 const (
-	NEGATIVE_SHIFT     = 7
-	NEGATIVE_BIT_MASK  = 0b1000_0000
+	NEGATIVE_SHIFT    = 7
+	NEGATIVE_BIT_MASK = 0b1000_0000
 
-	OVERFLOW_SHIFT     = 6
-	OVERFLOW_BIT_MASK  = 0b0100_0000
+	OVERFLOW_SHIFT    = 6
+	OVERFLOW_BIT_MASK = 0b0100_0000
 
-	BREAK_BIT_MASK     = 0b0001_0000
+	BREAK_BIT_MASK = 0b0001_0000
 
-	DECIMAL_SHIFT      = 3
-	DECIMAL_BIT_MASK   = 0b0000_1000
+	DECIMAL_SHIFT    = 3
+	DECIMAL_BIT_MASK = 0b0000_1000
 
 	INTERRUPT_SHIFT    = 2
 	INTERRUPT_BIT_MASK = 0b0000_0100
 
-	ZERO_SHIFT         = 1
-	ZERO_BIT_MASK      = 0b0000_0010
+	ZERO_SHIFT    = 1
+	ZERO_BIT_MASK = 0b0000_0010
 
-	CARRY_SHIFT        = 0
-	CARRY_BIT_MASK     = 0b0000_0001
+	CARRY_SHIFT    = 0
+	CARRY_BIT_MASK = 0b0000_0001
 
 	INITIAL_STATUS = 0b0010_0000
 )
@@ -98,12 +98,12 @@ func (s *Status) GetCarryNum() byte {
 
 func (s *Status) setXBit(value bool, mask byte) {
 	if value {
-		*s |= Status (mask)
+		*s |= Status(mask)
 	} else {
-		*s &= Status (not(mask))
+		*s &= Status(not(mask))
 	}
 }
 
 func (s *Status) getXBit(mask, shift byte) bool {
-	return (*s & Status(mask)) >> shift == 1
+	return (*s&Status(mask))>>shift == 1
 }

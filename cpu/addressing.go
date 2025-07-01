@@ -79,8 +79,7 @@ func (c *CPU) getIndirectAddr() Word {
 	hi := c.ReadMemory(c.PC)
 	c.PC++
 
-
-	loAddr, hiAddr := joinBytesToWord(lo, hi), joinBytesToWord((lo + 1), hi)
+	loAddr, hiAddr := joinBytesToWord(lo, hi), joinBytesToWord((lo+1), hi)
 	effectiveLo := c.ReadMemory(loAddr)
 	effectiveHi := c.ReadMemory(hiAddr)
 	return joinBytesToWord(effectiveLo, effectiveHi)
@@ -98,7 +97,7 @@ func (c *CPU) getAbsoluteAddr() Word {
 func (c *CPU) getAbsoluteAddrNoPC() Word {
 	lo := c.ReadMemory(c.PC)
 	hi := c.ReadMemory(c.PC + 1)
-    return joinBytesToWord(lo, hi)
+	return joinBytesToWord(lo, hi)
 }
 
 func (c *CPU) getZeroPageAddr() Word {

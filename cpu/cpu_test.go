@@ -146,6 +146,7 @@ func parse_test_data(jsonFilePath string) []testScenario {
 }
 
 const maxMemory = (1 << 16)
+
 func createCPU(cpuState testCPUState) cpu.CPU {
 	testCPU := cpu.CPU{
 		X:      cpuState.x,

@@ -95,6 +95,12 @@ func (c *CPU) getAbsoluteAddr() Word {
 	return joinBytesToWord(lo, hi)
 }
 
+func (c *CPU) getAbsoluteAddrNoPC() Word {
+	lo := c.ReadMemory(c.PC)
+	hi := c.ReadMemory(c.PC + 1)
+    return joinBytesToWord(lo, hi)
+}
+
 func (c *CPU) getZeroPageAddr() Word {
 	lo := c.ReadMemory(c.PC)
 	c.PC++

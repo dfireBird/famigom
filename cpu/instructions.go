@@ -16,7 +16,8 @@ func (c *CPU) i_BRK() {
 	c.pushIntoStack(byte(c.Flags) | BREAK_BIT_MASK)
 	c.Flags.SetInterruptDisable(true)
 
-	c.PC = IRQ_BRK_HANDLER_ADDR
+	handler_routine_addr := joinBytesToWord(c.ReadMemory(IRQ_BRK_HANDLER_ADDR), c.ReadMemory(IRQ_BRK_HANDLER_ADDR+1))
+	c.PC = handler_routine_addr
 }
 
 func (c *CPU) i_ORA(op byte) {
@@ -114,28 +115,28 @@ func (c *CPU) i_TAX() {
 	c.X = c.A
 
 	c.Flags.SetZero(c.X == 0)
-	c.Flags.SetZero(isNegative(c.X))
+	c.Flags.SetNegative(isNegative(c.X))
 }
 
 func (c *CPU) i_TAY() {
 	c.Y = c.A
 
 	c.Flags.SetZero(c.Y == 0)
-	c.Flags.SetZero(isNegative(c.Y))
+	c.Flags.SetNegative(isNegative(c.Y))
 }
 
 func (c *CPU) i_TXA() {
 	c.A = c.X
 
 	c.Flags.SetZero(c.A == 0)
-	c.Flags.SetZero(isNegative(c.A))
+	c.Flags.SetNegative(isNegative(c.A))
 }
 
 func (c *CPU) i_TYA() {
 	c.A = c.Y
 
 	c.Flags.SetZero(c.A == 0)
-	c.Flags.SetZero(isNegative(c.A))
+	c.Flags.SetNegative(isNegative(c.A))
 }
 
 func (c *CPU) i_ASL(value byte, resSet func(byte)) {
@@ -171,7 +172,7 @@ func (c *CPU) i_JMP(addr Word) {
 }
 
 func (c *CPU) i_JSR(addr Word) {
-	c.pushAddrIntoStack(c.PC)
+	c.pushAddrIntoStack(c.PC + 1)
 	c.PC = addr
 }
 
@@ -242,6 +243,9 @@ func (c *CPU) i_PHA() {
 
 func (c *CPU) i_PLA() {
 	c.A = c.pullFromStack()
+
+	c.Flags.SetZero(c.A == 0)
+	c.Flags.SetNegative(isNegative(c.A))
 }
 
 func (c *CPU) i_PHP() {
@@ -389,8 +393,8 @@ func (c *CPU) add(op byte) {
 
 func (c *CPU) pushAddrIntoStack(value Word) {
 	lo, hi := splitWordToByte(value)
-	c.pushIntoStack(lo)
 	c.pushIntoStack(hi)
+	c.pushIntoStack(lo)
 }
 
 func (c *CPU) pullAddrFromStack() Word {

@@ -351,7 +351,7 @@ func (c *CPU) Step() {
 		c.i_JMP(c.getIndirectAddr())
 
 	case 0x20:
-		c.i_JSR(c.getAbsoluteAddr())
+		c.i_JSR(c.getAbsoluteAddrNoPC())
 	case 0x60:
 		c.i_RTS()
 
@@ -402,9 +402,9 @@ func (c *CPU) pushIntoStack(value byte) {
 }
 
 func (c *CPU) pullFromStack() byte {
+	c.SP++
 	effectiveStackAddr := 0x0100 | Word(c.SP)
 	value := c.ReadMemory(effectiveStackAddr)
-	c.SP++
 	return value
 }
 

@@ -37,8 +37,8 @@ type testScenario struct {
 	cycles  []cycleState
 }
 
-func run_insturction_test(t *testing.T, jsonFilePath string) {
-	testScenarios := parse_test_data(jsonFilePath)
+func runInstructionTest(t *testing.T, jsonFilePath string) {
+	testScenarios := parseTestData(jsonFilePath)
 
 	for _, scenario := range testScenarios {
 		t.Run(scenario.name, func(t *testing.T) {
@@ -75,7 +75,7 @@ func run_insturction_test(t *testing.T, jsonFilePath string) {
 	}
 }
 
-func parse_test_data(jsonFilePath string) []testScenario {
+func parseTestData(jsonFilePath string) []testScenario {
 	parseCPUState := func(data map[string]any) testCPUState {
 		pc := Word(data["pc"].(float64))
 		s := byte(data["s"].(float64))

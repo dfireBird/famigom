@@ -1,6 +1,7 @@
 package cpu
 
 import (
+	"github.com/dfirebird/famigom/bus"
 	. "github.com/dfirebird/famigom/types"
 )
 
@@ -19,7 +20,7 @@ type CPU struct {
 	SP    byte
 	PC    Word
 
-	Memory [maxMemory]byte
+	MemoryBus bus.MemoryBus
 
 	// Internal to emulator
 
@@ -388,11 +389,11 @@ func (c *CPU) Step() {
 }
 
 func (c *CPU) ReadMemory(addr Word) byte {
-	return c.Memory[addr]
+	return c.MemoryBus.ReadMemory(addr)
 }
 
 func (c *CPU) WriteMemory(addr Word, value byte) {
-	c.Memory[addr] = value
+	c.MemoryBus.WriteMemory(addr, value)
 }
 
 func (c *CPU) pushIntoStack(value byte) {

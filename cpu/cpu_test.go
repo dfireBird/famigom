@@ -37,6 +37,11 @@ type testScenario struct {
 	cycles  []cycleState
 }
 
+
+type testMemoryBus struct {
+    memory [maxMemory]byte
+}
+
 func runInstructionTest(t *testing.T, jsonFilePath string) {
 	testScenarios := parseTestData(jsonFilePath)
 
@@ -155,7 +160,9 @@ func createCPU(cpuState testCPUState) cpu.CPU {
 		Flags:  cpu.Status(cpuState.p),
 		SP:     cpuState.s,
 		PC:     cpuState.pc,
-		Memory: [maxMemory]byte{},
+		MemoryBus: &testMemoryBus{
+			memory: [maxMemory]byte{},
+		},
 	}
 
 	for _, ramV := range cpuState.ram {
@@ -163,4 +170,13 @@ func createCPU(cpuState testCPUState) cpu.CPU {
 	}
 
 	return testCPU
+}
+
+
+func (b *testMemoryBus) ReadMemory(addr Word) byte{
+    return b.memory[addr]
+}
+
+func (b *testMemoryBus) WriteMemory(addr Word, value byte) {
+    b.memory[addr] = value
 }

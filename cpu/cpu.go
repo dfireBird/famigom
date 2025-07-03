@@ -233,13 +233,13 @@ func (c *CPU) Step() {
 	case 0xA0:
 		c.i_LDY(c.getWithImmediate())
 	case 0xA4:
-		c.i_LDX(c.getWithZeroPageAddress())
+		c.i_LDY(c.getWithZeroPageAddress())
 	case 0xB4:
-		c.i_LDY(c.getWithZeroPageIndexedAddr(c.Y))
+		c.i_LDY(c.getWithZeroPageIndexedAddr(c.X))
 	case 0xAC:
 		c.i_LDY(c.getWithAbsoluteAddress())
 	case 0xBC:
-		c.i_LDY(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_LDY(c.getWithAbsoluteIndexedAddr(c.X))
 
 	case 0xAA:
 		c.i_TAX()

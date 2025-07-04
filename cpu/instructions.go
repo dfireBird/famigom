@@ -12,7 +12,9 @@ const (
 )
 
 func (c *CPU) i_BRK() {
-	c.pushAddrIntoStack(c.PC + 1)
+	c.ReadMemory(c.PC) // dummy read for implied addressing
+	c.PC++
+	c.pushAddrIntoStack(c.PC)
 	c.pushIntoStack(byte(c.Flags) | BREAK_BIT_MASK)
 	c.Flags.SetInterruptDisable(true)
 
@@ -61,27 +63,33 @@ func (c *CPU) i_SBC(op byte) {
 
 func (c *CPU) i_INC(op byte, memSet func(Word, byte)) {
 	res := c.increment(op)
+	memSet(c.currentGetAddr, op)
 	memSet(c.currentGetAddr, res)
 }
 
 func (c *CPU) i_INX() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.X = c.increment(c.X)
 }
 
 func (c *CPU) i_INY() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Y = c.increment(c.Y)
 }
 
 func (c *CPU) i_DEC(op byte, memSet func(Word, byte)) {
 	res := c.decrement(op)
+	memSet(c.currentGetAddr, op)
 	memSet(c.currentGetAddr, res)
 }
 
 func (c *CPU) i_DEX() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.X = c.decrement(c.X)
 }
 
 func (c *CPU) i_DEY() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Y = c.decrement(c.Y)
 }
 
@@ -97,21 +105,20 @@ func (c *CPU) i_LDY(value byte) {
 	c.Y = c.load(value)
 }
 
-// Stores use getXXXAddr functions result as parameter but doesn't use it
-// But uses the currentGetAddr as address value to write to
-func (c *CPU) i_STA(_ byte) {
-	c.WriteMemory(c.currentGetAddr, c.A)
+func (c *CPU) i_STA(addr Word) {
+	c.WriteMemory(addr, c.A)
 }
 
-func (c *CPU) i_STX(_ byte) {
-	c.WriteMemory(c.currentGetAddr, c.X)
+func (c *CPU) i_STX(addr Word) {
+	c.WriteMemory(addr, c.X)
 }
 
-func (c *CPU) i_STY(_ byte) {
-	c.WriteMemory(c.currentGetAddr, c.Y)
+func (c *CPU) i_STY(addr Word) {
+	c.WriteMemory(addr, c.Y)
 }
 
 func (c *CPU) i_TAX() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.X = c.A
 
 	c.Flags.SetZero(c.X == 0)
@@ -119,6 +126,7 @@ func (c *CPU) i_TAX() {
 }
 
 func (c *CPU) i_TAY() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Y = c.A
 
 	c.Flags.SetZero(c.Y == 0)
@@ -126,6 +134,7 @@ func (c *CPU) i_TAY() {
 }
 
 func (c *CPU) i_TXA() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.A = c.X
 
 	c.Flags.SetZero(c.A == 0)
@@ -133,6 +142,7 @@ func (c *CPU) i_TXA() {
 }
 
 func (c *CPU) i_TYA() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.A = c.Y
 
 	c.Flags.SetZero(c.A == 0)
@@ -172,16 +182,23 @@ func (c *CPU) i_JMP(addr Word) {
 }
 
 func (c *CPU) i_JSR(addr Word) {
+	c.dummyOperationStack()
 	c.pushAddrIntoStack(c.PC + 1)
 	c.PC = addr
 }
 
 func (c *CPU) i_RTS() {
+	c.ReadMemory(c.PC)      // dummy read for implied addressing
+	c.dummyOperationStack() // dummy pull to increment SP
 	pc := c.pullAddrFromStack()
+
+	c.ReadMemory(pc) // dummy read for incrementing PC
 	c.PC = pc + 1
 }
 
 func (c *CPU) i_RTI() {
+	c.ReadMemory(c.PC)      // dummy read for implied addressing
+	c.dummyOperationStack() // dummy pull to increment SP
 	flags := c.pullFromStack()
 	pc := c.pullAddrFromStack()
 
@@ -238,10 +255,13 @@ func (c *CPU) i_BVC(offset byte) {
 }
 
 func (c *CPU) i_PHA() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.pushIntoStack(c.A)
 }
 
 func (c *CPU) i_PLA() {
+	c.ReadMemory(c.PC)      // dummy read for implied addressing
+	c.dummyOperationStack() // dummy pull to increment SP
 	c.A = c.pullFromStack()
 
 	c.Flags.SetZero(c.A == 0)
@@ -249,18 +269,23 @@ func (c *CPU) i_PLA() {
 }
 
 func (c *CPU) i_PHP() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.pushIntoStack(byte(c.Flags) | BREAK_BIT_MASK)
 }
 
 func (c *CPU) i_PLP() {
+	c.ReadMemory(c.PC)      // dummy read for implied addressing
+	c.dummyOperationStack() // dummy pull to increment SP
 	c.Flags.SetValueFromStack(c.pullFromStack())
 }
 
 func (c *CPU) i_TXS() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.SP = c.X
 }
 
 func (c *CPU) i_TSX() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.X = c.SP
 
 	c.Flags.SetZero(c.X == 0)
@@ -268,34 +293,43 @@ func (c *CPU) i_TSX() {
 }
 
 func (c *CPU) i_CLC() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Flags.SetCarry(false)
 }
 
 func (c *CPU) i_CLD() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Flags.SetDecimal(false)
 }
 
 func (c *CPU) i_CLI() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Flags.SetInterruptDisable(false)
 }
 
 func (c *CPU) i_CLV() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Flags.SetOverflow(false)
 }
 
 func (c *CPU) i_SEC() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Flags.SetCarry(true)
 }
 
 func (c *CPU) i_SED() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Flags.SetDecimal(true)
 }
 
 func (c *CPU) i_SEI() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
 	c.Flags.SetInterruptDisable(true)
 }
 
-func (c *CPU) i_NOP() {}
+func (c *CPU) i_NOP() {
+	c.ReadMemory(c.PC) // dummy read for implied addressing
+}
 
 func (c *CPU) i_JAM() {
 	// FIXME: It should set a variable in CPU so that CPU runs but doesn't
@@ -305,8 +339,15 @@ func (c *CPU) i_JAM() {
 }
 
 func (c *CPU) branch(offset byte) {
+	c.ReadMemory(c.PC)
 	signedOffset := int32(int8(offset))
+
+	oldPC := c.PC
 	c.PC = uint16(int32(c.PC) + signedOffset)
+
+	if c.PC&HI_BYTE_MASK != oldPC&HI_BYTE_MASK {
+		c.ReadMemory(c.PC)
+	}
 }
 
 func (c *CPU) compare(register, value byte) {
@@ -330,6 +371,7 @@ func (c *CPU) shift(value byte, resSet func(byte), isLeft bool) {
 	c.Flags.SetNegative(isNegative(result))
 	c.Flags.SetZero(result == 0)
 
+	resSet(value) // dummy write only emulate cycle, also writes to accumulator twice not sure of implications
 	resSet(result)
 }
 
@@ -348,6 +390,7 @@ func (c *CPU) rotate(value byte, resSet func(byte), isLeft bool) {
 	c.Flags.SetNegative(isNegative(result))
 	c.Flags.SetZero(result == 0)
 
+	resSet(value) // dummy write only emulate cycle, also writes to accumulator twice not sure of implications
 	resSet(result)
 }
 

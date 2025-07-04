@@ -51,7 +51,7 @@ func runInstructionTest(t *testing.T, jsonFilePath string) {
 			testCPU.Step()
 
 			for _, ramV := range scenario.final.ram {
-				if cpuValue := testCPU.ReadMemory(ramV.addr); cpuValue != ramV.value {
+				if cpuValue := testCPU.MemoryBus.ReadMemory(ramV.addr); cpuValue != ramV.value {
 					t.Fatalf("Memory value mismatch. Expect %d at %d but got %d", ramV.value, ramV.addr, cpuValue)
 				}
 			}
@@ -73,6 +73,10 @@ func runInstructionTest(t *testing.T, jsonFilePath string) {
 			}
 			if testCPU.PC != scenario.final.pc {
 				t.Fatalf("Register value mismatch. Expect %d at %s but got %d", scenario.final.pc, "PC", testCPU.PC)
+			}
+
+			if testCPU.Cycles != uint(len(scenario.cycles)) {
+				t.Fatalf("Cycle count mismatch. Expect %d but got %d", len(scenario.cycles), testCPU.Cycles)
 			}
 
 		})
@@ -152,20 +156,22 @@ func parseTestData(jsonFilePath string) []testScenario {
 const maxMemory = (1 << 16)
 
 func createCPU(cpuState testCPUState) cpu.CPU {
-	testCPU := cpu.CPU{
-		X:     cpuState.x,
-		Y:     cpuState.y,
-		A:     cpuState.a,
-		Flags: cpu.Status(cpuState.p),
-		SP:    cpuState.s,
-		PC:    cpuState.pc,
-		MemoryBus: &testMemoryBus{
-			memory: [maxMemory]byte{},
-		},
+	memory := testMemoryBus{
+		memory: [maxMemory]byte{},
 	}
 
 	for _, ramV := range cpuState.ram {
-		testCPU.WriteMemory(ramV.addr, ramV.value)
+		memory.WriteMemory(ramV.addr, ramV.value)
+	}
+
+	testCPU := cpu.CPU{
+		X:         cpuState.x,
+		Y:         cpuState.y,
+		A:         cpuState.a,
+		Flags:     cpu.Status(cpuState.p),
+		SP:        cpuState.s,
+		PC:        cpuState.pc,
+		MemoryBus: &memory,
 	}
 
 	return testCPU

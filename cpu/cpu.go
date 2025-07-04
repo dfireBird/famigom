@@ -23,6 +23,7 @@ type CPU struct {
 	MemoryBus bus.MemoryBus
 
 	// Internal to emulator
+	Cycles uint
 
 	// Only used in GetXXXAddr funtions for memory write instructions
 	currentGetAddr Word
@@ -44,6 +45,11 @@ func New() CPU {
 }
 
 func (c *CPU) Step() {
+	if c.Cycles > 1 {
+		c.Cycles--
+		return
+	}
+
 	setResultFactory := func(c *CPU) func(byte) {
 		return func(v byte) { c.WriteMemory(c.currentGetAddr, v) }
 	}
@@ -59,7 +65,7 @@ func (c *CPU) Step() {
 	case 0x01:
 		c.i_ORA(c.getWithXIndexIndirectAddr())
 	case 0x11:
-		c.i_ORA(c.getWithIndirectYIndexAddr())
+		c.i_ORA(c.getWithIndirectYIndexAddr(false))
 	case 0x05:
 		c.i_ORA(c.getWithZeroPageAddress())
 	case 0x15:
@@ -67,16 +73,16 @@ func (c *CPU) Step() {
 	case 0x09:
 		c.i_ORA(c.getWithImmediate())
 	case 0x19:
-		c.i_ORA(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_ORA(c.getWithAbsoluteIndexedAddr(c.Y, false))
 	case 0x0D:
 		c.i_ORA(c.getWithAbsoluteAddress())
 	case 0x1D:
-		c.i_ORA(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_ORA(c.getWithAbsoluteIndexedAddr(c.X, false))
 
 	case 0x21:
 		c.i_AND(c.getWithXIndexIndirectAddr())
 	case 0x31:
-		c.i_AND(c.getWithIndirectYIndexAddr())
+		c.i_AND(c.getWithIndirectYIndexAddr(false))
 	case 0x25:
 		c.i_AND(c.getWithZeroPageAddress())
 	case 0x35:
@@ -84,16 +90,16 @@ func (c *CPU) Step() {
 	case 0x29:
 		c.i_AND(c.getWithImmediate())
 	case 0x39:
-		c.i_AND(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_AND(c.getWithAbsoluteIndexedAddr(c.Y, false))
 	case 0x2D:
 		c.i_AND(c.getWithAbsoluteAddress())
 	case 0x3D:
-		c.i_AND(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_AND(c.getWithAbsoluteIndexedAddr(c.X, false))
 
 	case 0x41:
 		c.i_EOR(c.getWithXIndexIndirectAddr())
 	case 0x51:
-		c.i_EOR(c.getWithIndirectYIndexAddr())
+		c.i_EOR(c.getWithIndirectYIndexAddr(false))
 	case 0x45:
 		c.i_EOR(c.getWithZeroPageAddress())
 	case 0x55:
@@ -101,11 +107,11 @@ func (c *CPU) Step() {
 	case 0x49:
 		c.i_EOR(c.getWithImmediate())
 	case 0x59:
-		c.i_EOR(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_EOR(c.getWithAbsoluteIndexedAddr(c.Y, false))
 	case 0x4D:
 		c.i_EOR(c.getWithAbsoluteAddress())
 	case 0x5D:
-		c.i_EOR(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_EOR(c.getWithAbsoluteIndexedAddr(c.X, false))
 
 	case 0x24:
 		c.i_BIT(c.getWithZeroPageAddress())
@@ -115,7 +121,7 @@ func (c *CPU) Step() {
 	case 0x61:
 		c.i_ADC(c.getWithXIndexIndirectAddr())
 	case 0x71:
-		c.i_ADC(c.getWithIndirectYIndexAddr())
+		c.i_ADC(c.getWithIndirectYIndexAddr(false))
 	case 0x65:
 		c.i_ADC(c.getWithZeroPageAddress())
 	case 0x75:
@@ -123,16 +129,16 @@ func (c *CPU) Step() {
 	case 0x69:
 		c.i_ADC(c.getWithImmediate())
 	case 0x79:
-		c.i_ADC(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_ADC(c.getWithAbsoluteIndexedAddr(c.Y, false))
 	case 0x6D:
 		c.i_ADC(c.getWithAbsoluteAddress())
 	case 0x7D:
-		c.i_ADC(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_ADC(c.getWithAbsoluteIndexedAddr(c.X, false))
 
 	case 0xE1:
 		c.i_SBC(c.getWithXIndexIndirectAddr())
 	case 0xF1:
-		c.i_SBC(c.getWithIndirectYIndexAddr())
+		c.i_SBC(c.getWithIndirectYIndexAddr(false))
 	case 0xE5:
 		c.i_SBC(c.getWithZeroPageAddress())
 	case 0xF5:
@@ -140,11 +146,11 @@ func (c *CPU) Step() {
 	case 0xE9:
 		c.i_SBC(c.getWithImmediate())
 	case 0xF9:
-		c.i_SBC(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_SBC(c.getWithAbsoluteIndexedAddr(c.Y, false))
 	case 0xED:
 		c.i_SBC(c.getWithAbsoluteAddress())
 	case 0xFD:
-		c.i_SBC(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_SBC(c.getWithAbsoluteIndexedAddr(c.X, false))
 
 	case 0xE6:
 		c.i_INC(c.getWithZeroPageAddress(), c.WriteMemory)
@@ -153,7 +159,7 @@ func (c *CPU) Step() {
 	case 0xF6:
 		c.i_INC(c.getWithZeroPageIndexedAddr(c.X), c.WriteMemory)
 	case 0xFE:
-		c.i_INC(c.getWithAbsoluteIndexedAddr(c.X), c.WriteMemory)
+		c.i_INC(c.getWithAbsoluteIndexedAddr(c.X, true), c.WriteMemory)
 
 	case 0xC6:
 		c.i_DEC(c.getWithZeroPageAddress(), c.WriteMemory)
@@ -162,7 +168,7 @@ func (c *CPU) Step() {
 	case 0xD6:
 		c.i_DEC(c.getWithZeroPageIndexedAddr(c.X), c.WriteMemory)
 	case 0xDE:
-		c.i_DEC(c.getWithAbsoluteIndexedAddr(c.X), c.WriteMemory)
+		c.i_DEC(c.getWithAbsoluteIndexedAddr(c.X, true), c.WriteMemory)
 
 	case 0xE8:
 		c.i_INX()
@@ -174,38 +180,38 @@ func (c *CPU) Step() {
 		c.i_DEY()
 
 	case 0x81:
-		c.i_STA(c.getWithXIndexIndirectAddr())
+		c.i_STA(c.getXIndexIndirectAddr())
 	case 0x91:
-		c.i_STA(c.getWithIndirectYIndexAddr())
+		c.i_STA(c.getIndirectYIndexAddr(true))
 	case 0x85:
-		c.i_STA(c.getWithZeroPageAddress())
+		c.i_STA(c.getZeroPageAddr())
 	case 0x95:
-		c.i_STA(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_STA(c.getZeroPageIndexedAddr(c.X))
 	case 0x99:
-		c.i_STA(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_STA(c.getAbsoluteIndexedAddr(c.Y, true))
 	case 0x8D:
-		c.i_STA(c.getWithAbsoluteAddress())
+		c.i_STA(c.getAbsoluteAddr())
 	case 0x9D:
-		c.i_STA(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_STA(c.getAbsoluteIndexedAddr(c.X, true))
 
 	case 0x86:
-		c.i_STX(c.getWithZeroPageAddress())
+		c.i_STX(c.getZeroPageAddr())
 	case 0x96:
-		c.i_STX(c.getWithZeroPageIndexedAddr(c.Y))
+		c.i_STX(c.getZeroPageIndexedAddr(c.Y))
 	case 0x8E:
-		c.i_STX(c.getWithAbsoluteAddress())
+		c.i_STX(c.getAbsoluteAddr())
 
 	case 0x84:
-		c.i_STY(c.getWithZeroPageAddress())
+		c.i_STY(c.getZeroPageAddr())
 	case 0x94:
-		c.i_STY(c.getWithZeroPageIndexedAddr(c.X))
+		c.i_STY(c.getZeroPageIndexedAddr(c.X))
 	case 0x8C:
-		c.i_STY(c.getWithAbsoluteAddress())
+		c.i_STY(c.getAbsoluteAddr())
 
 	case 0xA1:
 		c.i_LDA(c.getWithXIndexIndirectAddr())
 	case 0xB1:
-		c.i_LDA(c.getWithIndirectYIndexAddr())
+		c.i_LDA(c.getWithIndirectYIndexAddr(false))
 	case 0xA5:
 		c.i_LDA(c.getWithZeroPageAddress())
 	case 0xB5:
@@ -213,11 +219,11 @@ func (c *CPU) Step() {
 	case 0xA9:
 		c.i_LDA(c.getWithImmediate())
 	case 0xB9:
-		c.i_LDA(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_LDA(c.getWithAbsoluteIndexedAddr(c.Y, false))
 	case 0xAD:
 		c.i_LDA(c.getWithAbsoluteAddress())
 	case 0xBD:
-		c.i_LDA(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_LDA(c.getWithAbsoluteIndexedAddr(c.X, false))
 
 	case 0xA2:
 		c.i_LDX(c.getWithImmediate())
@@ -228,7 +234,7 @@ func (c *CPU) Step() {
 	case 0xAE:
 		c.i_LDX(c.getWithAbsoluteAddress())
 	case 0xBE:
-		c.i_LDX(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_LDX(c.getWithAbsoluteIndexedAddr(c.Y, false))
 
 	case 0xA0:
 		c.i_LDY(c.getWithImmediate())
@@ -239,7 +245,7 @@ func (c *CPU) Step() {
 	case 0xAC:
 		c.i_LDY(c.getWithAbsoluteAddress())
 	case 0xBC:
-		c.i_LDY(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_LDY(c.getWithAbsoluteIndexedAddr(c.X, false))
 
 	case 0xAA:
 		c.i_TAX()
@@ -259,49 +265,49 @@ func (c *CPU) Step() {
 	case 0x16:
 		c.i_ASL(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
 	case 0x0A:
-		c.i_ASL(c.A, func(v byte) { c.A = v })
+		c.i_ASL(c.getWithImplied(c.A), func(v byte) { c.A = v })
 	case 0x0E:
 		c.i_ASL(c.getWithAbsoluteAddress(), setResultFactory(c))
 	case 0x1E:
-		c.i_ASL(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+		c.i_ASL(c.getWithAbsoluteIndexedAddr(c.X, true), setResultFactory(c))
 
 	case 0x46:
 		c.i_LSR(c.getWithZeroPageAddress(), setResultFactory(c))
 	case 0x56:
 		c.i_LSR(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
 	case 0x4A:
-		c.i_LSR(c.A, func(v byte) { c.A = v })
+		c.i_LSR(c.getWithImplied(c.A), func(v byte) { c.A = v })
 	case 0x4E:
 		c.i_LSR(c.getWithAbsoluteAddress(), setResultFactory(c))
 	case 0x5E:
-		c.i_LSR(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+		c.i_LSR(c.getWithAbsoluteIndexedAddr(c.X, true), setResultFactory(c))
 
 	case 0x26:
 		c.i_ROL(c.getWithZeroPageAddress(), setResultFactory(c))
 	case 0x36:
 		c.i_ROL(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
 	case 0x2A:
-		c.i_ROL(c.A, func(v byte) { c.A = v })
+		c.i_ROL(c.getWithImplied(c.A), func(v byte) { c.A = v })
 	case 0x2E:
 		c.i_ROL(c.getWithAbsoluteAddress(), setResultFactory(c))
 	case 0x3E:
-		c.i_ROL(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+		c.i_ROL(c.getWithAbsoluteIndexedAddr(c.X, true), setResultFactory(c))
 
 	case 0x66:
 		c.i_ROR(c.getWithZeroPageAddress(), setResultFactory(c))
 	case 0x76:
 		c.i_ROR(c.getWithZeroPageIndexedAddr(c.X), setResultFactory(c))
 	case 0x6A:
-		c.i_ROR(c.A, func(v byte) { c.A = v })
+		c.i_ROR(c.getWithImplied(c.A), func(v byte) { c.A = v })
 	case 0x6E:
 		c.i_ROR(c.getWithAbsoluteAddress(), setResultFactory(c))
 	case 0x7E:
-		c.i_ROR(c.getWithAbsoluteIndexedAddr(c.X), setResultFactory(c))
+		c.i_ROR(c.getWithAbsoluteIndexedAddr(c.X, true), setResultFactory(c))
 
 	case 0xC1:
 		c.i_CMP(c.getWithXIndexIndirectAddr())
 	case 0xD1:
-		c.i_CMP(c.getWithIndirectYIndexAddr())
+		c.i_CMP(c.getWithIndirectYIndexAddr(false))
 	case 0xC5:
 		c.i_CMP(c.getWithZeroPageAddress())
 	case 0xD5:
@@ -309,11 +315,11 @@ func (c *CPU) Step() {
 	case 0xC9:
 		c.i_CMP(c.getWithImmediate())
 	case 0xD9:
-		c.i_CMP(c.getWithAbsoluteIndexedAddr(c.Y))
+		c.i_CMP(c.getWithAbsoluteIndexedAddr(c.Y, false))
 	case 0xCD:
 		c.i_CMP(c.getWithAbsoluteAddress())
 	case 0xDD:
-		c.i_CMP(c.getWithAbsoluteIndexedAddr(c.X))
+		c.i_CMP(c.getWithAbsoluteIndexedAddr(c.X, false))
 
 	case 0xC0:
 		c.i_CPY(c.getWithImmediate())
@@ -389,10 +395,12 @@ func (c *CPU) Step() {
 }
 
 func (c *CPU) ReadMemory(addr Word) byte {
+	c.Cycles += 1
 	return c.MemoryBus.ReadMemory(addr)
 }
 
 func (c *CPU) WriteMemory(addr Word, value byte) {
+	c.Cycles += 1
 	c.MemoryBus.WriteMemory(addr, value)
 }
 
@@ -407,6 +415,11 @@ func (c *CPU) pullFromStack() byte {
 	effectiveStackAddr := 0x0100 | Word(c.SP)
 	value := c.ReadMemory(effectiveStackAddr)
 	return value
+}
+
+func (c *CPU) dummyOperationStack() {
+	effectiveStackAddr := 0x0100 | Word(c.SP)
+	c.ReadMemory(effectiveStackAddr)
 }
 
 func joinBytesToWord(lo, hi byte) Word {

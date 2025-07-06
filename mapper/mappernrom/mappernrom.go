@@ -1,4 +1,4 @@
-package mapper
+package mappernrom
 
 import (
 	"github.com/dfirebird/famigom/program"
@@ -6,6 +6,8 @@ import (
 )
 
 const (
+	mapperNum = 0x00
+
 	prgRAMSize = 4096
 
 	lowAddr  = 0x6000
@@ -70,4 +72,8 @@ func (m *MapperNROM) WriteMemory(addr Word, value byte) {
 		prgRamAddr := addr - lowPrgRamAddr
 		m.prgRam[prgRamAddr] = value
 	}
+}
+
+func (m *MapperNROM) GetMapperNum() byte {
+    return mapperNum
 }

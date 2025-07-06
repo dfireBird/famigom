@@ -30,8 +30,8 @@ func (b *MainBus) WriteMemory(addr Word, value byte) {
 	}
 }
 
-func (b *MainBus) RegisterDevice(addrRange AddrRange, deviceStruct *MemoryBus) *MainBus {
-	b.devicesMap[addrRange] = deviceStruct
+func (b *MainBus) RegisterDevice(addrRange AddrRange, deviceStruct MemoryBus) *MainBus {
+	b.devicesMap[addrRange] = &deviceStruct
 	return b
 }
 

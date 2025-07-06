@@ -72,7 +72,7 @@ func Parse(romData []byte) (bool, *Program) {
 	logger.Printf("PRG ROM Bank Size %d", PrgRomBankSize)
 	logger.Printf("CHR ROM Bank Size %d", ChrRomBankSize)
 	logger.Printf("Mapper #%d", Mapper)
-	logger.Printf("Name Table Mirroring %s", nametableArrangement.toMirroringString())
+	logger.Printf("Name Table Mirroring %v", nametableArrangement.GetMirroring())
 
 	isTrainerPresent := (flags6 & 0x04) == 0x04
 	if isTrainerPresent {
@@ -108,8 +108,16 @@ func Parse(romData []byte) (bool, *Program) {
 	return true, &program
 }
 
-func (n NametableArrangement) toMirroringString() string {
-	if n == Vertical {
+func (n NametableArrangement) GetMirroring() NametableArrangement {
+    if n == Horizontal {
+		return Vertical
+	} else {
+		return Horizontal
+	}
+}
+
+func (n NametableArrangement) String() string {
+	if n == Horizontal {
 		return "Horizontal"
 	} else {
 		return "Vertical"

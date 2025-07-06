@@ -30,7 +30,7 @@ type CPU struct {
 	isJammed       bool
 }
 
-func New() CPU {
+func New(memoryBus bus.MemoryBus) CPU {
 	return CPU{
 		X: 0x0,
 		Y: 0x0,
@@ -40,6 +40,7 @@ func New() CPU {
 		SP:    0xFF,
 		PC:    0x00,
 
+		MemoryBus: memoryBus,
 		// other fields default value as per go spec is fine
 	}
 }

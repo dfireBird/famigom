@@ -2,6 +2,7 @@ package program
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 )
@@ -25,6 +26,11 @@ const (
 	Horizontal
 )
 
+var (
+	ErrInvalidNesRom = fmt.Errorf("ROM file is invalid/corrupted")
+	ErrInsupportedVersion = fmt.Errorf("emulator does not support NES 2.0 ROM yet")
+)
+
 type Program struct {
 	Mapper         byte
 	PrgRomBankSize byte
@@ -36,11 +42,11 @@ type Program struct {
 	ChrRom []byte
 }
 
-func Parse(romData []byte) (bool, *Program) {
+func Parse(romData []byte) (*Program, error) {
 	seekIdx := uint(0)
 
 	if nesHeader := romData[:4]; !bytes.Equal(nesHeader, NES_HEADER) {
-		return false, nil
+		return nil, ErrInvalidNesRom
 	}
 	seekIdx += 4
 
@@ -58,7 +64,7 @@ func Parse(romData []byte) (bool, *Program) {
 	seekIdx += 8
 
 	if nes2FormatFlag := (flags7 & 0x0C) >> 2; nes2FormatFlag == 2 {
-		return false, nil
+		return nil, ErrInsupportedVersion
 	}
 
 	mapperLo := flags6 & 0xF0
@@ -105,7 +111,7 @@ func Parse(romData []byte) (bool, *Program) {
 		NametableArrangement: nametableArrangement,
 	}
 
-	return true, &program
+	return &program, nil
 }
 
 func (n NametableArrangement) GetMirroring() NametableArrangement {

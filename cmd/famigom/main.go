@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dfirebird/famigom/program"
+	"github.com/dfirebird/famigom/console"
 )
 
 var logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
@@ -28,8 +28,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *verbose {
-		logger.Printf("Parsing ROM/Program file of size %d", len(romData))
+
+	console, err := console.CreateConsole(&romData, *verbose)
+	if err != nil {
+		logger.Printf("ERROR: Creating Emulator failed: %w", err)
+		os.Exit(1)
 	}
-	program.Parse(romData)
+
+	logger.Println(console)
 }

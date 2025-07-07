@@ -1,11 +1,20 @@
 package console
 
 import (
+	"log"
+	"os"
+
 	"github.com/dfirebird/famigom/bus"
 	"github.com/dfirebird/famigom/cpu"
 	"github.com/dfirebird/famigom/cpu/ram"
 	"github.com/dfirebird/famigom/mapper"
 	"github.com/dfirebird/famigom/program"
+)
+
+var (
+	VERBOSE_LOGGING = false
+
+	logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 )
 
 type Console struct {
@@ -15,7 +24,18 @@ type Console struct {
 	mapperNum byte
 }
 
-func CreateConsole(program *program.Program) Console {
+func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
+	VERBOSE_LOGGING = verbose
+
+	if VERBOSE_LOGGING {
+		logger.Printf("Parsing ROM/Program file of size %d", len(*romData))
+	}
+	program, err := program.Parse(*romData)
+
+	if err != nil {
+		return nil, err
+	}
+
 	mainBus := bus.CreateMainBus()
 
 	ram, ramAddrRange := ram.CreateRAM()
@@ -25,9 +45,11 @@ func CreateConsole(program *program.Program) Console {
 
 	cpu := cpu.New(&mainBus)
 
-	return Console{
+	console := Console{
 		cpu:       &cpu,
 		mapper:    &mapper,
 		mapperNum: program.Mapper,
 	}
+
+	return &console, nil
 }

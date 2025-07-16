@@ -27,8 +27,8 @@ const (
 )
 
 var (
-	ErrInvalidNesRom = fmt.Errorf("ROM file is invalid/corrupted")
-	ErrInsupportedVersion = fmt.Errorf("emulator does not support NES 2.0 ROM yet")
+	ErrInvalidNesRom      = fmt.Errorf("ROM file is invalid/corrupted")
+	ErrInsupportedVersion = fmt.Errorf("NES 2.0 ROM is not supported yet")
 )
 
 type Program struct {
@@ -115,7 +115,7 @@ func Parse(romData []byte) (*Program, error) {
 }
 
 func (n NametableArrangement) GetMirroring() NametableArrangement {
-    if n == Horizontal {
+	if n == Horizontal {
 		return Vertical
 	} else {
 		return Horizontal

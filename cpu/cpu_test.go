@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/dfirebird/famigom/bus"
 	"github.com/dfirebird/famigom/cpu"
 	. "github.com/dfirebird/famigom/types"
 )
@@ -164,6 +165,9 @@ func createCPU(cpuState testCPUState) cpu.CPU {
 		memory.WriteMemory(ramV.addr, ramV.value)
 	}
 
+	memoryBus := bus.CreateMainBus()
+	memoryBus.RegisterDevice(&memory)
+
 	testCPU := cpu.CPU{
 		X:         cpuState.x,
 		Y:         cpuState.y,
@@ -171,14 +175,14 @@ func createCPU(cpuState testCPUState) cpu.CPU {
 		Flags:     cpu.Status(cpuState.p),
 		SP:        cpuState.s,
 		PC:        cpuState.pc,
-		MemoryBus: &memory,
+		MemoryBus: &memoryBus,
 	}
 
 	return testCPU
 }
 
-func (b *testMemoryBus) ReadMemory(addr Word) byte {
-	return b.memory[addr]
+func (b *testMemoryBus) ReadMemory(addr Word) (bool, byte) {
+	return true, b.memory[addr]
 }
 
 func (b *testMemoryBus) WriteMemory(addr Word, value byte) {

@@ -20,7 +20,7 @@ type CPU struct {
 	SP    byte
 	PC    Word
 
-	MemoryBus bus.MemoryBus
+	MemoryBus *bus.MainBus
 
 	// Internal to emulator
 	Cycles uint
@@ -30,7 +30,7 @@ type CPU struct {
 	isJammed       bool
 }
 
-func New(memoryBus bus.MemoryBus) CPU {
+func New(memoryBus *bus.MainBus) CPU {
 	return CPU{
 		X: 0x0,
 		Y: 0x0,

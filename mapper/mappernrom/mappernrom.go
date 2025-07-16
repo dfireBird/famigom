@@ -35,7 +35,7 @@ type MapperNROM struct {
 	nametableMirroring program.NametableArrangement
 }
 
-func CreateMapperNRom(prgRom []byte, chrRom [kib8]byte, nametableMirroring program.NametableArrangement) (*MapperNROM, AddrRange) {
+func CreateMapperNRom(prgRom []byte, chrRom [kib8]byte, nametableMirroring program.NametableArrangement) *MapperNROM {
 	isPrgRom32kib := len(prgRom) == kib32
 	mapper := MapperNROM{
 		prgRom:             prgRom,
@@ -45,25 +45,22 @@ func CreateMapperNRom(prgRom []byte, chrRom [kib8]byte, nametableMirroring progr
 		nametableMirroring: nametableMirroring,
 	}
 
-	addrRange := AddrRange{
-		LowAddr:  lowAddr,
-		HighAddr: highAddr,
-	}
-
-	return &mapper, addrRange
+	return &mapper
 }
 
-func (m *MapperNROM) ReadMemory(addr Word) byte {
+func (m *MapperNROM) ReadMemory(addr Word) (bool, byte) {
 	if lowPrgRamAddr <= addr && addr <= highPrgRamAddr {
 		prgRamAddr := addr - lowPrgRamAddr
-		return m.prgRam[prgRamAddr]
-	} else {
+		return true, m.prgRam[prgRamAddr]
+	} else if lowPrgRomAddr <= addr && addr <= highPrgRomAddr {
 		prgRomAddr := addr - lowPrgRomAddr
 		if !m.isPrgRom32kib {
 			prgRomAddr = prgRomAddr % kib16
 		}
 
-		return m.prgRom[prgRomAddr]
+		return true, m.prgRom[prgRomAddr]
+	} else {
+		return false, 0
 	}
 }
 
@@ -75,5 +72,5 @@ func (m *MapperNROM) WriteMemory(addr Word, value byte) {
 }
 
 func (m *MapperNROM) GetMapperNum() byte {
-    return mapperNum
+	return mapperNum
 }

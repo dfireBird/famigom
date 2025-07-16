@@ -28,10 +28,9 @@ func main() {
 		os.Exit(1)
 	}
 
-
 	console, err := console.CreateConsole(&romData, *verbose)
 	if err != nil {
-		logger.Printf("ERROR: Creating Emulator failed: %w", err)
+		logger.Printf("ERROR: Creating Emulator failed: %v", err)
 		os.Exit(1)
 	}
 

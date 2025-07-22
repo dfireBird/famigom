@@ -39,7 +39,10 @@ func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
 	mainBus := bus.CreateMainBus()
 
 	ram := ram.CreateRAM()
-	mapper := mapper.GetMapper(program)
+	mapper, err := mapper.GetMapper(program)
+	if err != nil {
+		return nil, err
+	}
 
 	mainBus.RegisterDevice(ram).RegisterDevice(mapper)
 

@@ -7,6 +7,8 @@ import (
 
 const (
 	maxMemory = (1 << 16)
+
+	RESET_VECTOR = 0xFFFC
 )
 
 type CPU struct {
@@ -393,6 +395,29 @@ func (c *CPU) Step() {
 	default:
 		c.i_JAM()
 	}
+}
+
+func (c *CPU) PowerUp() {
+    c.resetImpl(true)
+}
+
+func (c *CPU) Reset() {
+    c.resetImpl(false)
+}
+
+func (c *CPU) resetImpl(isPowerUp bool) {
+	if (isPowerUp) {
+		c.A, c.X, c.Y = 0, 0, 0
+		c.Flags = Status(INITIAL_STATUS)
+		c.SP = 0x00
+	}
+
+	c.PC = joinBytesToWord(c.ReadMemory(RESET_VECTOR), c.ReadMemory(RESET_VECTOR + 1))
+	c.Cycles = 0
+
+	c.Flags.SetInterruptDisable(true)
+
+	c.SP -= 3
 }
 
 func (c *CPU) ReadMemory(addr Word) byte {

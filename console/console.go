@@ -17,6 +17,10 @@ var (
 	logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 )
 
+const (
+	CPU_CYCLE_DURATION_NS = 558
+)
+
 type Console struct {
 	cpu *cpu.CPU
 
@@ -55,4 +59,12 @@ func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
 	}
 
 	return &console, nil
+}
+
+func (c *Console) PowerUp() {
+    c.cpu.PowerUp()
+}
+
+func (c *Console) Step() {
+    c.cpu.Step()
 }

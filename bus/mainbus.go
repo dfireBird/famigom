@@ -10,22 +10,25 @@ type MainBusDevice interface {
 }
 
 type MainBus struct {
-	devicesMap []*MainBusDevice
+	lastDataValue byte
+	devicesMap    []*MainBusDevice
 }
 
 func (b *MainBus) ReadMemory(addr Word) byte {
 	for _, device := range b.devicesMap {
 		if isRead, value := (*device).ReadMemory(addr); isRead {
+			b.lastDataValue = value
 			return value
 		}
 	}
-	return 0x00
+	return b.lastDataValue
 }
 
 func (b *MainBus) WriteMemory(addr Word, value byte) {
 	for _, device := range b.devicesMap {
 		(*device).WriteMemory(addr, value)
 	}
+	b.lastDataValue = value
 }
 
 func (b *MainBus) RegisterDevice(deviceStruct MainBusDevice) *MainBus {

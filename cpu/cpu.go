@@ -398,21 +398,21 @@ func (c *CPU) Step() {
 }
 
 func (c *CPU) PowerUp() {
-    c.resetImpl(true)
+	c.resetImpl(true)
 }
 
 func (c *CPU) Reset() {
-    c.resetImpl(false)
+	c.resetImpl(false)
 }
 
 func (c *CPU) resetImpl(isPowerUp bool) {
-	if (isPowerUp) {
+	if isPowerUp {
 		c.A, c.X, c.Y = 0, 0, 0
 		c.Flags = Status(INITIAL_STATUS)
 		c.SP = 0x00
 	}
 
-	c.PC = joinBytesToWord(c.ReadMemory(RESET_VECTOR), c.ReadMemory(RESET_VECTOR + 1))
+	c.PC = joinBytesToWord(c.ReadMemory(RESET_VECTOR), c.ReadMemory(RESET_VECTOR+1))
 	c.Cycles = 0
 
 	c.Flags.SetInterruptDisable(true)

@@ -62,7 +62,7 @@ func main() {
 	scale := float32(1.5)
 	var scaledPoints []sdl.FPoint
 	for _, point := range FAMIGOM_POINTS {
-		scaledPoints = append(scaledPoints, sdl.FPoint{origin.X + point.X * scale, origin.Y + point.Y * scale})
+		scaledPoints = append(scaledPoints, sdl.FPoint{origin.X + point.X*scale, origin.Y + point.Y*scale})
 	}
 
 	renderer.SetDrawColor(255, 255, 255, sdl.ALPHA_OPAQUE)

@@ -62,9 +62,9 @@ func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
 }
 
 func (c *Console) PowerUp() {
-    c.cpu.PowerUp()
+	c.cpu.PowerUp()
 }
 
 func (c *Console) Step() {
-    c.cpu.Step()
+	c.cpu.Step()
 }

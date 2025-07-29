@@ -26,10 +26,6 @@ const (
 	INITIAL_STATUS = 0b0010_0000
 )
 
-func not(value byte) byte {
-	return 0b1111_1111 ^ value
-}
-
 func (s *Status) SetValueFromStack(value byte) {
 	newStatus := Status(value)
 	s.SetCarry(newStatus.GetCarry())
@@ -100,7 +96,7 @@ func (s *Status) setXBit(value bool, mask byte) {
 	if value {
 		*s |= Status(mask)
 	} else {
-		*s &= Status(not(mask))
+		*s &^= Status(mask)
 	}
 }
 

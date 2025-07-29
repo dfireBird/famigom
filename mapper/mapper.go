@@ -14,7 +14,7 @@ type Mapper interface {
 }
 
 var (
-	ErrUnsupported = func(mNo byte) error { return fmt.Errorf("Mapper is not supported yet %d", mNo) }
+	ErrUnsupported = func(mNo byte) error { return fmt.Errorf("mapper is not supported yet %d", mNo) }
 )
 
 func GetMapper(program *program.Program) (Mapper, error) {

@@ -8,7 +8,18 @@ import (
 const (
 	maxMemory = (1 << 16)
 
-	RESET_VECTOR = 0xFFFC
+	NMI_VECTOR     = 0xFFFA
+	RESET_VECTOR   = 0xFFFC
+	IRQ_BRK_VECTOR = 0xFFFE
+)
+
+type interruptSource byte
+
+const (
+	NMI interruptSource = iota
+	IRQ
+	RESET
+	BRK
 )
 
 type CPU struct {
@@ -30,6 +41,9 @@ type CPU struct {
 	// Only used in GetXXXAddr funtions for memory write instructions
 	currentGetAddr Word
 	isJammed       bool
+
+	nmiFlag bool
+	irqFlag bool
 }
 
 func New(memoryBus *bus.MainBus) CPU {
@@ -48,7 +62,7 @@ func New(memoryBus *bus.MainBus) CPU {
 }
 
 func (c *CPU) Step() {
-	if c.Cycles > 1 {
+	if c.Cycles > 0 {
 		c.Cycles--
 		return
 	}
@@ -57,6 +71,7 @@ func (c *CPU) Step() {
 		return func(v byte) { c.WriteMemory(c.currentGetAddr, v) }
 	}
 
+	c.pollInterrupts()
 	opcode := c.ReadMemory(c.PC)
 	c.PC++
 	switch opcode {
@@ -395,29 +410,78 @@ func (c *CPU) Step() {
 	default:
 		c.i_JAM()
 	}
+	c.Cycles--
 }
 
 func (c *CPU) PowerUp() {
-	c.resetImpl(true)
+	c.A, c.X, c.Y = 0, 0, 0
+	c.Flags = Status(INITIAL_STATUS)
+	c.SP = 0x00
+	c.doInterrupt(RESET)
 }
 
 func (c *CPU) Reset() {
-	c.resetImpl(false)
+	c.doInterrupt(RESET)
 }
 
-func (c *CPU) resetImpl(isPowerUp bool) {
-	if isPowerUp {
-		c.A, c.X, c.Y = 0, 0, 0
-		c.Flags = Status(INITIAL_STATUS)
-		c.SP = 0x00
+func (c *CPU) NMI() {
+	c.nmiFlag = true
+}
+
+func (c *CPU) IRQ() {
+	c.irqFlag = true
+}
+
+func (c *CPU) pollInterrupts() {
+	if c.nmiFlag {
+		c.doInterrupt(NMI)
+	} else if c.irqFlag && !c.Flags.GetInterruptDisable() {
+		c.doInterrupt(IRQ)
+	}
+}
+
+func (c *CPU) doInterrupt(source interruptSource) {
+	if source != BRK {
+		c.ReadMemory(c.PC)
 	}
 
-	c.PC = joinBytesToWord(c.ReadMemory(RESET_VECTOR), c.ReadMemory(RESET_VECTOR+1))
-	c.Cycles = 0
+	c.ReadMemory(c.PC) // dummy read
+	if source == BRK {
+		c.PC++
+	}
 
+	if source != RESET {
+		c.pushAddrIntoStack(c.PC)
+
+		var statusRegValue byte
+		if source == IRQ || source == NMI {
+			statusRegValue = byte(c.Flags) &^ BREAK_BIT_MASK
+		} else {
+			statusRegValue = byte(c.Flags) | BREAK_BIT_MASK
+		}
+
+		c.pushIntoStack(statusRegValue)
+	} else {
+		for range 3 {
+			c.ReadMemory(c.PC)
+			c.PC--
+		}
+	}
 	c.Flags.SetInterruptDisable(true)
 
-	c.SP -= 3
+	var interruptVector Word
+	switch source {
+	case NMI:
+		interruptVector = NMI_VECTOR
+	case IRQ:
+		interruptVector = IRQ_BRK_VECTOR
+	case RESET:
+		interruptVector = RESET_VECTOR
+	case BRK:
+		interruptVector = IRQ_BRK_VECTOR
+	}
+
+	c.PC = joinBytesToWord(c.ReadMemory(interruptVector), c.ReadMemory(interruptVector+1))
 }
 
 func (c *CPU) ReadMemory(addr Word) byte {

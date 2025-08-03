@@ -7,19 +7,10 @@ import (
 const (
 	BIT_7_NEG_SET = 0b1000_0000
 	BIT_8_OVL_SET = 0x100
-
-	IRQ_BRK_HANDLER_ADDR = 0xFFFE
 )
 
 func (c *CPU) i_BRK() {
-	c.ReadMemory(c.PC) // dummy read for implied addressing
-	c.PC++
-	c.pushAddrIntoStack(c.PC)
-	c.pushIntoStack(byte(c.Flags) | BREAK_BIT_MASK)
-	c.Flags.SetInterruptDisable(true)
-
-	handler_routine_addr := joinBytesToWord(c.ReadMemory(IRQ_BRK_HANDLER_ADDR), c.ReadMemory(IRQ_BRK_HANDLER_ADDR+1))
-	c.PC = handler_routine_addr
+	c.doInterrupt(BRK)
 }
 
 func (c *CPU) i_ORA(op byte) {

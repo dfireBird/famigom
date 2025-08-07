@@ -27,13 +27,7 @@ func (b *PPUBus) WritePRGMemory(addr types.Word, value byte) {
 	}
 }
 
-func (b *PPUBus) RegisterBus(deviceStruct PPUBusDevice) *PPUBus {
+func (b *PPUBus) RegisterDevice(deviceStruct PPUBusDevice) *PPUBus {
 	b.devicesMap = append(b.devicesMap, &deviceStruct)
 	return b
-}
-
-func CreatePPUBus() PPUBus {
-	return PPUBus{
-		devicesMap: []*PPUBusDevice{},
-	}
 }

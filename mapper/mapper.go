@@ -11,6 +11,7 @@ import (
 type Mapper interface {
 	GetMapperNum() byte
 	bus.MainBusDevice
+	bus.PPUBusDevice
 }
 
 var (

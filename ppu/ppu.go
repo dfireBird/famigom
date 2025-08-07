@@ -53,11 +53,54 @@ type PPU struct {
 	fineX           byte
 	isFirstWrite    bool
 
-	line  uint16
-	pixel uint16
+	line     uint16
+	pixel    uint16
+	oddFrame bool
 
 	chrMemoryBus *bus.PPUBus
 	oamMemory    [oamMemorySize]byte
+}
+
+func CreatePPU() PPU {
+	ppuBus := bus.CreatePPUBus()
+
+	return PPU{
+		chrMemoryBus: &ppuBus,
+	}
+}
+
+func createPPUBus() bus.PPUBus {
+	ppuBus := bus.PPUBus{
+		devicesMap: []*bus.PPUBusDevice{},
+	}
+
+	vRAM := VRAM{
+		data: [2048]byte{},
+	}
+
+	palleteRAM := PalleteRAM{
+		data: [32]byte{},
+	}
+
+	ppuBus.RegisterDevice(&vRAM).RegisterDevice(&palleteRAM)
+
+	return ppuBus
+}
+
+func (p *PPU) PowerUP() {
+	p.ppuCtrl = 0
+	p.ppuMask = 0
+	p.vblankFlag = true
+	p.spite0Hit = false
+	p.spiteOverflow = true
+
+	p.oamAddr = 0
+
+	p.tempVRAMAddr = 0
+	p.currentVRAMAddr = 0
+	p.ppuData = 0
+
+	p.oddFrame = false
 }
 
 func (p *PPU) readOAMMemory(addr byte) byte {

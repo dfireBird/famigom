@@ -19,6 +19,9 @@ const (
 	lowPrgRomAddr  = 0x8000
 	highPrgRomAddr = highAddr
 
+	lowChrRomAddr = 0x0000
+	hiChrRomAddr  = 0x1FFF
+
 	kib8  = 8192
 	kib16 = kib8 * 2
 	kib32 = kib16 * 2
@@ -68,6 +71,19 @@ func (m *MapperNROM) WriteMemory(addr Word, value byte) {
 	if lowPrgRamAddr <= addr && addr <= highPrgRamAddr {
 		prgRamAddr := addr - lowPrgRamAddr
 		m.prgRam[prgRamAddr] = value
+	}
+}
+
+func (m *MapperNROM) ReadPRGMemory(addr Word) (bool, byte) {
+	if lowChrRomAddr <= addr && addr <= hiChrRomAddr {
+		return true, m.chrRom[addr]
+	}
+	return false, 0
+}
+
+func (m *MapperNROM) WritePRGMemory(addr Word, value byte) {
+	if lowChrRomAddr <= addr && addr <= hiChrRomAddr {
+		m.chrRom[addr] = value
 	}
 }
 

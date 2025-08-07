@@ -5,6 +5,8 @@ import (
 )
 
 const (
+	maxIoRegisterAddr = 0x2007
+
 	nametableSelectMask = 0x03
 
 	fineScrollMask   byte = 0x07
@@ -24,7 +26,7 @@ const (
 
 func (p *PPU) ReadMemory(addr types.Word) (bool, byte) {
 	if ioLoAddr <= addr && addr <= ioHiAddr {
-		effectiveAddr := addr & 0x2007
+		effectiveAddr := addr & maxIoRegisterAddr
 		switch effectiveAddr {
 		case PPUSTATUS:
 			status := p.getPPUStatus()
@@ -52,7 +54,7 @@ func (p *PPU) ReadMemory(addr types.Word) (bool, byte) {
 
 func (p *PPU) WriteMemory(addr types.Word, value byte) {
 	if ioLoAddr <= addr && addr <= ioHiAddr {
-		effectiveAddr := addr & 0x2007
+		effectiveAddr := addr & maxIoRegisterAddr
 		switch effectiveAddr {
 		case PPUCTRL:
 			nametableBits := value & nametableSelectMask

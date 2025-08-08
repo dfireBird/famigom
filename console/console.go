@@ -8,6 +8,7 @@ import (
 	"github.com/dfirebird/famigom/cpu"
 	"github.com/dfirebird/famigom/cpu/ram"
 	"github.com/dfirebird/famigom/mapper"
+	"github.com/dfirebird/famigom/ppu"
 	"github.com/dfirebird/famigom/program"
 )
 
@@ -23,6 +24,7 @@ const (
 
 type Console struct {
 	cpu *cpu.CPU
+	ppu *ppu.PPU
 
 	mapper    *mapper.Mapper
 	mapperNum byte
@@ -51,9 +53,11 @@ func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
 	mainBus.RegisterDevice(ram).RegisterDevice(mapper)
 
 	cpu := cpu.New(&mainBus)
+	ppu := ppu.CreatePPU()
 
 	console := Console{
 		cpu:       &cpu,
+		ppu:       &ppu,
 		mapper:    &mapper,
 		mapperNum: program.Mapper,
 	}
@@ -63,8 +67,13 @@ func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
 
 func (c *Console) PowerUp() {
 	c.cpu.PowerUp()
+	c.ppu.PowerUp()
 }
 
 func (c *Console) Step() {
 	c.cpu.Step()
+
+	c.ppu.Step()
+	c.ppu.Step()
+	c.ppu.Step()
 }

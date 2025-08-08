@@ -62,7 +62,7 @@ type PPU struct {
 }
 
 func CreatePPU() PPU {
-	ppuBus := bus.CreatePPUBus()
+	ppuBus := createPPUBus()
 
 	return PPU{
 		chrMemoryBus: &ppuBus,
@@ -70,9 +70,7 @@ func CreatePPU() PPU {
 }
 
 func createPPUBus() bus.PPUBus {
-	ppuBus := bus.PPUBus{
-		devicesMap: []*bus.PPUBusDevice{},
-	}
+	ppuBus := bus.NewPPUBus()
 
 	vRAM := VRAM{
 		data: [2048]byte{},

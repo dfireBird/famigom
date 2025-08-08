@@ -11,6 +11,12 @@ type PPUBus struct {
 	devicesMap []*PPUBusDevice
 }
 
+func NewPPUBus() PPUBus {
+	return PPUBus{
+		devicesMap: []*PPUBusDevice{},
+	}
+}
+
 func (b *PPUBus) ReadPRGMemory(addr types.Word) byte {
 	for _, device := range b.devicesMap {
 		if isRead, value := (*device).ReadPRGMemory(addr); isRead {

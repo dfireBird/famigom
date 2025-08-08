@@ -82,16 +82,19 @@ type PPU struct {
 	chrMemoryBus *bus.PPUBus
 	oamMemory    [oamMemorySize]byte
 
+	nmiCallback *func()
+
 	currentNTData byte
 	currentATData byte
 	currentTileLo byte
 	currentTileHi byte
 }
 
-func CreatePPU() PPU {
+func CreatePPU(nmiCallback *func()) PPU {
 	ppuBus := createPPUBus()
 
 	return PPU{
+		nmiCallback: nmiCallback,
 		chrMemoryBus: &ppuBus,
 	}
 }
@@ -176,7 +179,7 @@ func (p *PPU) Step() {
 	} else if p.line == vblankScanLineLo {
 		if p.dot == 1 {
 			p.vblankFlag = true
-			// FIXME: trigger nmi
+			(*p.nmiCallback)()
 		}
 	}
 

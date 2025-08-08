@@ -44,16 +44,23 @@ func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
 
 	mainBus := bus.CreateMainBus()
 
-	ram := ram.CreateRAM()
+	cpuRAM := ram.CreateRAM()
 	mapper, err := mapper.GetMapper(program)
 	if err != nil {
 		return nil, err
 	}
 
-	mainBus.RegisterDevice(ram).RegisterDevice(mapper)
+	mainBus.RegisterDevice(cpuRAM).RegisterDevice(mapper)
 
 	cpu := cpu.New(&mainBus)
-	ppu := ppu.CreatePPU()
+
+	dmaCallback := cpu.DMA
+	dmaDevice := ram.CreateDMADevice(&dmaCallback)
+	mainBus.RegisterDevice(dmaDevice)
+
+
+	nmiCallback := cpu.NMI
+	ppu := ppu.CreatePPU(&nmiCallback)
 
 	console := Console{
 		cpu:       &cpu,

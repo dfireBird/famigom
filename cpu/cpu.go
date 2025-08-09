@@ -46,8 +46,12 @@ type CPU struct {
 	nmiFlag bool
 	irqFlag bool
 
-	dmaFlag bool
-	dmaAddrHi byte
+	dmaFlag      bool
+	dmaAddrHi    byte
+	dmaIdx       byte
+	dmaReadFlag  bool
+	dmaDummyFlag bool
+	dmaData      byte
 }
 
 func New(memoryBus *bus.MainBus) CPU {
@@ -66,14 +70,14 @@ func New(memoryBus *bus.MainBus) CPU {
 }
 
 func (c *CPU) Step() {
-	if c.Cycles > 0 {
+	if c.dmaFlag {
+		c.doOAMDMA()
 		c.Cycles--
 		return
 	}
 
-	if c.dmaFlag {
-		c.doOAMDMA();
-		c.dmaFlag = false
+	if c.Cycles > 0 {
+		c.Cycles--
 		return
 	}
 
@@ -445,6 +449,10 @@ func (c *CPU) IRQ() {
 func (c *CPU) DMA(value byte) {
 	c.dmaFlag = true
 	c.dmaAddrHi = value
+	c.dmaIdx = 0
+	c.dmaReadFlag = true
+	c.dmaDummyFlag = true
+	c.dmaData = 0
 }
 
 func (c *CPU) pollInterrupts() {
@@ -502,12 +510,23 @@ func (c *CPU) doInterrupt(source interruptSource) {
 }
 
 func (c *CPU) doOAMDMA() {
-	dmaAddr := Word(c.dmaAddrHi) << 8
-	for i := range 256 {
-		curAddr := dmaAddr + Word(i)
-		value := c.ReadMemory(curAddr)
-		c.WriteMemory(ppu.OAMDATA, value)
+	if c.dmaDummyFlag {
+		c.dmaDummyFlag = false
+		return
 	}
+
+	if c.dmaIdx == 255 && !c.dmaReadFlag {
+		c.dmaFlag = false
+	}
+
+	dmaAddr := joinBytesToWord(c.dmaIdx, c.dmaAddrHi)
+	if c.dmaReadFlag {
+		c.dmaData = c.ReadMemory(dmaAddr)
+	} else {
+		c.WriteMemory(ppu.OAMDATA, c.dmaData)
+		c.dmaIdx += 1
+	}
+	c.dmaReadFlag = !c.dmaReadFlag
 }
 
 func (c *CPU) ReadMemory(addr Word) byte {

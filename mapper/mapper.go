@@ -21,7 +21,7 @@ var (
 func GetMapper(program *program.Program) (Mapper, error) {
 	switch program.Mapper {
 	case 0x00:
-		return mappernrom.CreateMapperNRom(program.PrgRom, [8192]byte(program.ChrRom), program.NametableArrangement), nil
+		return mappernrom.CreateMapperNRom(program.PrgRom, program.ChrRom, program.NametableArrangement), nil
 	default:
 		return nil, ErrUnsupported(program.Mapper)
 	}

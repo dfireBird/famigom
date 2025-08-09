@@ -38,13 +38,20 @@ type MapperNROM struct {
 	nametableMirroring program.NametableArrangement
 }
 
-func CreateMapperNRom(prgRom []byte, chrRom [kib8]byte, nametableMirroring program.NametableArrangement) *MapperNROM {
+func CreateMapperNRom(prgRom []byte, chrRom []byte, nametableMirroring program.NametableArrangement) *MapperNROM {
 	isPrgRom32kib := len(prgRom) == kib32
+
+	var chr [kib8]byte
+	if (len(chrRom) == 0) {
+		chr = [kib8]byte{} // CHR RAM
+	} else {
+		chr = [8192]byte(chrRom)
+	}
 	mapper := MapperNROM{
 		prgRom:             prgRom,
 		isPrgRom32kib:      isPrgRom32kib,
 		prgRam:             [4096]byte{},
-		chrRom:             chrRom,
+		chrRom:             chr,
 		nametableMirroring: nametableMirroring,
 	}
 

@@ -19,7 +19,7 @@ var (
 )
 
 const (
-	CPU_CYCLE_DURATION_NS = 558
+	CPU_CYCLE_DURATION_NS = 559
 )
 
 type Console struct {

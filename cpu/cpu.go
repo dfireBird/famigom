@@ -488,8 +488,8 @@ func (c *CPU) doInterrupt(source interruptSource) {
 		c.pushIntoStack(statusRegValue)
 	} else {
 		for range 3 {
-			c.ReadMemory(c.PC)
-			c.PC--
+			c.ReadMemory(Word(c.SP))
+			c.SP--
 		}
 	}
 	c.Flags.SetInterruptDisable(true)

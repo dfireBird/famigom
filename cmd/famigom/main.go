@@ -70,30 +70,30 @@ func main() {
 	cycleTimer := sdl.TicksNS()
 	elapsed := cycleTimer - cycleTimer
 	sdl.RunLoop(func() error {
+		var event sdl.Event
+		for sdl.PollEvent(&event) {
+			switch event.Type {
+			case sdl.EVENT_QUIT:
+				return sdl.EndLoop
+			case sdl.EVENT_KEY_DOWN:
+				if event.KeyboardEvent().Scancode == sdl.SCANCODE_ESCAPE {
+					return sdl.EndLoop
+				}
+			}
+		}
+
 		now := sdl.TicksNS()
 		elapsed += now - cycleTimer
 		cycleTimer = now
 
 		for elapsed > console.CPU_CYCLE_DURATION_NS {
-			var event sdl.Event
-			for sdl.PollEvent(&event) {
-				switch event.Type {
-				case sdl.EVENT_QUIT:
-					return sdl.EndLoop
-				case sdl.EVENT_KEY_DOWN:
-					if event.KeyboardEvent().Scancode == sdl.SCANCODE_ESCAPE {
-						return sdl.EndLoop
-					}
-				}
-			}
-
 			konsole.Step()
 
-			renderer.RenderPoints(scaledPoints)
-			renderer.Present()
 			elapsed -= console.CPU_CYCLE_DURATION_NS
 		}
 
+		renderer.RenderPoints(scaledPoints)
+		renderer.Present()
 		return nil
 	})
 }

@@ -2,6 +2,7 @@ package ppu
 
 import (
 	"github.com/dfirebird/famigom/bus"
+	"github.com/dfirebird/famigom/program"
 	"github.com/dfirebird/famigom/types"
 )
 
@@ -37,7 +38,7 @@ const (
 	tilesForNextScanLineHi = 336
 
 	horizontalNametableMask = 0x0400
-	verticalNametableMask   = 0x8000
+	verticalNametableMask   = 0x0800
 )
 
 type SpriteSize byte
@@ -90,8 +91,8 @@ type PPU struct {
 	currentTileHi byte
 }
 
-func CreatePPU(nmiCallback *func()) PPU {
-	ppuBus := createPPUBus()
+func CreatePPU(nmiCallback *func(), mirroring program.NametableArrangement) PPU {
+	ppuBus := createPPUBus(mirroring)
 
 	return PPU{
 		nmiCallback: nmiCallback,
@@ -99,10 +100,11 @@ func CreatePPU(nmiCallback *func()) PPU {
 	}
 }
 
-func createPPUBus() bus.PPUBus {
+func createPPUBus(mirroring program.NametableArrangement) bus.PPUBus {
 	ppuBus := bus.NewPPUBus()
 
 	vRAM := VRAM{
+		mirroring: mirroring,
 		data: [2048]byte{},
 	}
 

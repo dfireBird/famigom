@@ -58,9 +58,9 @@ func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
 	dmaDevice := ram.CreateDMADevice(&dmaCallback)
 	mainBus.RegisterDevice(dmaDevice)
 
-
 	nmiCallback := cpu.NMI
-	ppu := ppu.CreatePPU(&nmiCallback)
+	ppu := ppu.CreatePPU(&nmiCallback, program.NametableArrangement.GetMirroring())
+	mainBus.RegisterDevice(&ppu)
 
 	console := Console{
 		cpu:       &cpu,

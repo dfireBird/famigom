@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"github.com/dfirebird/famigom/bus"
+	"github.com/dfirebird/famigom/ppu"
 	. "github.com/dfirebird/famigom/types"
 )
 
@@ -72,6 +73,7 @@ func (c *CPU) Step() {
 
 	if c.dmaFlag {
 		c.doOAMDMA();
+		c.dmaFlag = false
 		return
 	}
 
@@ -504,7 +506,7 @@ func (c *CPU) doOAMDMA() {
 	for i := range 256 {
 		curAddr := dmaAddr + Word(i)
 		value := c.ReadMemory(curAddr)
-		c.WriteMemory(curAddr, value)
+		c.WriteMemory(ppu.OAMDATA, value)
 	}
 }
 

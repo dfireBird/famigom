@@ -61,6 +61,7 @@ func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
 	nmiCallback := cpu.NMI
 	ppu := ppu.CreatePPU(&nmiCallback, program.NametableArrangement.GetMirroring())
 	mainBus.RegisterDevice(&ppu)
+	ppu.RegisterDevice(mapper)
 
 	console := Console{
 		cpu:       &cpu,

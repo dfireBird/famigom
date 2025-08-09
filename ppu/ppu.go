@@ -95,7 +95,7 @@ func CreatePPU(nmiCallback *func(), mirroring program.NametableArrangement) PPU 
 	ppuBus := createPPUBus(mirroring)
 
 	return PPU{
-		nmiCallback: nmiCallback,
+		nmiCallback:  nmiCallback,
 		chrMemoryBus: &ppuBus,
 	}
 }
@@ -105,7 +105,7 @@ func createPPUBus(mirroring program.NametableArrangement) bus.PPUBus {
 
 	vRAM := VRAM{
 		mirroring: mirroring,
-		data: [2048]byte{},
+		data:      [2048]byte{},
 	}
 
 	palleteRAM := PalleteRAM{
@@ -131,6 +131,10 @@ func (p *PPU) PowerUp() {
 	p.ppuData = 0
 
 	p.oddFrame = false
+}
+
+func (p *PPU) RegisterDevice(d bus.PPUBusDevice) {
+    p.chrMemoryBus.RegisterDevice(d)
 }
 
 func (p *PPU) Step() {

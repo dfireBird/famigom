@@ -7,15 +7,15 @@ import (
 
 const (
 	maxVRAMSize       = 2048
-	maxPalleteRAMSize = 32
+	maxPaletteRAMSize = 32
 
 	vramLoAddr = 0x2000
 	vramHiAddr = 0x2FFF
 
-	palleteRAMLoAddr = 0x3F00
-	palleteRAMHiAddr = 0x3FFF
+	paletteRAMLoAddr = 0x3F00
+	paletteRAMHiAddr = 0x3FFF
 
-	palleteRAMIndexMask = 0x3F1F
+	paletteRAMIndexMask = 0x3F1F
 )
 
 type VRAM struct {
@@ -51,21 +51,27 @@ func (v *VRAM) getNTAddrWithMirroring(addr types.Word) types.Word {
 	}
 }
 
-type PalleteRAM struct {
+type PaletteRAM struct {
 	data [32]byte
 }
 
-func (p *PalleteRAM) ReadPRGMemory(addr types.Word) (bool, byte) {
-	if palleteRAMLoAddr <= addr && addr <= palleteRAMHiAddr {
-		idx := (addr & palleteRAMIndexMask) - palleteRAMLoAddr
+func (p *PaletteRAM) ReadPRGMemory(addr types.Word) (bool, byte) {
+	if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
+		idx := (addr & paletteRAMIndexMask) - paletteRAMLoAddr
 		return true, p.data[idx]
 	}
 	return false, 0
 }
 
-func (p *PalleteRAM) WritePRGMemory(addr types.Word, value byte) {
-	if palleteRAMLoAddr <= addr && addr <= palleteRAMHiAddr {
-		idx := (addr & palleteRAMIndexMask) - palleteRAMLoAddr
+func (p *PaletteRAM) WritePRGMemory(addr types.Word, value byte) {
+	if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
+		idx := (addr & paletteRAMIndexMask) - paletteRAMLoAddr
+		if idx == 0x00 {
+			p.data[0x10] = value
+		}
+		if idx == 0x10 {
+			p.data[0x00] = value
+		}
 		p.data[idx] = value
 	}
 }

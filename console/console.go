@@ -8,6 +8,7 @@ import (
 	"github.com/dfirebird/famigom/cpu"
 	"github.com/dfirebird/famigom/cpu/ram"
 	"github.com/dfirebird/famigom/mapper"
+	"github.com/dfirebird/famigom/palette"
 	"github.com/dfirebird/famigom/ppu"
 	"github.com/dfirebird/famigom/program"
 )
@@ -84,4 +85,14 @@ func (c *Console) Step() {
 	c.ppu.Step()
 	c.ppu.Step()
 	c.ppu.Step()
+}
+
+func (c *Console) GetPixelData() []byte {
+	pixels := []byte{}
+	for _, colorIdx := range c.ppu.VirtualDisplay {
+		color := palette.GetColor(colorIdx)
+		pixels = append(pixels, 0xFF, color.B, color.G, color.R) // First byte is Alpha
+	}
+
+	return pixels
 }

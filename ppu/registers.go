@@ -18,6 +18,11 @@ const (
 	coarseYScrollShift = 5
 	fineYScrollShift   = 12
 
+	coarseXScroll1Bit   = 0x02
+	coarseXScroll1Shift = 1
+	coarseYScroll1Bit   = 0x40
+	coarseYScroll1Shift = 7
+
 	firstPPUAddrWriteMask = 0x1F
 	hiByteVRAMMask        = 0xFF00
 	loByteVRAMMask        = 0x00FF

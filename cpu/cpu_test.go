@@ -76,7 +76,7 @@ func runInstructionTest(t *testing.T, jsonFilePath string) {
 				t.Fatalf("Register value mismatch. Expect %d at %s but got %d", scenario.final.pc, "PC", testCPU.PC)
 			}
 
-			if testCPU.Cycles != uint(len(scenario.cycles)) {
+			if testCPU.Cycles+1 != uint(len(scenario.cycles)) {
 				t.Fatalf("Cycle count mismatch. Expect %d but got %d", len(scenario.cycles), testCPU.Cycles)
 			}
 

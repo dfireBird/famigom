@@ -16,6 +16,8 @@ const (
 	visibleDotsMax     = 256
 	totalDots          = visibleScanlineMax * visibleDotsMax
 
+	dotsTillFetchesUsed = 248
+
 	preRenderScanLine  = 261
 	visibleScanLineLo  = 0
 	visibleScanLineHi  = 239
@@ -26,7 +28,7 @@ const (
 	nextScanline1stTileDot = 328
 	nextScanline2ndTileDot = 336
 
-	maxDots = 340
+	maxDotsInALine = 340
 
 	horiPosCopyDot   = 257
 	veriPosCopyDotLo = 280
@@ -152,8 +154,7 @@ func (p *PPU) RegisterDevice(d bus.PPUBusDevice) {
 }
 
 func (p *PPU) Step() {
-	// FIXME: Do rendering of pixels
-	// fmt.Printf("(%d, %d):    0x%x\n", p.line, p.dot, p.currentVRAMAddr)
+	// FIXME: Do rendering of sprite pixels
 
 	if (visibleScanLineLo <= p.line && p.line <= visibleScanLineHi) || p.line == preRenderScanLine {
 		if p.dot == 0 {
@@ -167,26 +168,30 @@ func (p *PPU) Step() {
 			p.spiteOverflow = false
 		}
 
-		if 0 < p.dot && p.dot <= visibleDotsMax {
+		if p.isCurrentlyRendering() {
 			p.outputPixel()
+		}
 
+		if p.isRenderingEnabled() && (1 <= p.dot && p.dot <= visibleDotsMax) {
 			ld := p.doFetch(p.getBackgroundPatternTableAddr())
 			if ld == 8 {
 				p.currentTilePatternShiftRegisterLo = p.nextTilePatternShiftRegisterLo
 				p.currentTilePatternShiftRegisterHi = p.nextTilePatternShiftRegisterHi
 				p.currentTileAttributShiftRegister = p.nextTileAttributShiftRegister
 
-				p.nextTilePatternShiftRegisterLo = p.patternDataLoLatch
-				p.nextTilePatternShiftRegisterHi = p.patternDataHiLatch
-				p.nextTileAttributShiftRegister = p.aTDataLatch
+				if 1 <= p.dot && p.dot <= dotsTillFetchesUsed {
+					p.nextTilePatternShiftRegisterLo = p.patternDataLoLatch
+					p.nextTilePatternShiftRegisterHi = p.patternDataHiLatch
+					p.nextTileAttributShiftRegister = p.aTDataLatch
+				}
 			}
 		}
 
-		if spriteDotLo <= p.dot && p.dot <= spirteDotHi {
+		if p.isRenderingEnabled() && (spriteDotLo <= p.dot && p.dot <= spirteDotHi) {
 			// FIXME: sprites
 		}
 
-		if tilesForNextScanLineLo <= p.dot && p.dot <= tilesForNextScanLineHi {
+		if p.isRenderingEnabled() && (tilesForNextScanLineLo <= p.dot && p.dot <= tilesForNextScanLineHi) {
 			p.doFetch(p.getBackgroundPatternTableAddr())
 
 			if p.dot == nextScanline1stTileDot {
@@ -210,7 +215,7 @@ func (p *PPU) Step() {
 			p.currentVRAMAddr |= (p.tempVRAMAddr & horizontalNametableMask) // copy	nt bit
 		}
 
-		if p.isRenderingEnabled() && (veriPosCopyDotLo <= p.dot && p.dot <= veriPosCopyDotHi) {
+		if p.isRenderingEnabled() && p.line == preRenderScanLine && (veriPosCopyDotLo <= p.dot && p.dot <= veriPosCopyDotHi) {
 			p.currentVRAMAddr &^= coarseYScrollMask                   // coarse Y = 0
 			p.currentVRAMAddr |= (p.tempVRAMAddr & coarseYScrollMask) // copy coarse Y
 
@@ -223,7 +228,9 @@ func (p *PPU) Step() {
 	} else if p.line == vblankScanLineLo {
 		if p.dot == 1 {
 			p.vblankFlag = true
-			(*p.nmiCallback)()
+			if p.isNMIEnabled() {
+				(*p.nmiCallback)()
+			}
 		}
 	}
 
@@ -246,19 +253,23 @@ func (p *PPU) outputPixel() {
 	displayIdx := (p.line*visibleDotsMax + p.dot) - 1
 
 	if p.isBgRenderingEnabled() {
-		fineXBitSelect := byte(1) >> p.fineX
-		tileLo := (p.currentTilePatternShiftRegisterLo & fineXBitSelect) >> p.fineX
-		tileHi := (p.currentTilePatternShiftRegisterHi & fineXBitSelect) >> p.fineX
+		shiftOfFineX := (7 - (p.fineX % 8))
+		fineXBitSelect := byte(1) << shiftOfFineX // to make fineX value 0 to pull out MSB
+		tileLo := (p.currentTilePatternShiftRegisterLo & fineXBitSelect) >> shiftOfFineX
+		tileHi := (p.currentTilePatternShiftRegisterHi & fineXBitSelect) >> shiftOfFineX
 
 		coarseXBit1 := (p.currentVRAMAddr & coarseXScroll1Bit) >> coarseXScroll1Shift
 		coarseYBit1 := (p.currentVRAMAddr & coarseYScroll1Bit) >> coarseYScroll1Shift
 		atLoPos := coarseXBit1*2 + coarseYBit1*4
 		atHiPos := atLoPos + 1
 
-		attrLo := p.currentTileAttributShiftRegister & (1 << atLoPos)
-		attrHi := p.currentTileAttributShiftRegister & (1 << atHiPos)
+		attrLo := (p.currentTileAttributShiftRegister & (1 << atLoPos)) >> byte(atLoPos)
+		attrHi := (p.currentTileAttributShiftRegister & (1 << atHiPos)) >> byte(atHiPos)
 
 		paletteRAMIDx = bgPaletteMSB<<4 | attrHi<<3 | attrLo<<2 | tileHi<<1 | tileLo
+
+		p.currentTilePatternShiftRegisterLo = (p.currentTilePatternShiftRegisterLo << 1) | 1
+		p.currentTilePatternShiftRegisterHi = (p.currentTilePatternShiftRegisterHi << 1) | 1
 	}
 
 	// FIXME: Do Sprite Pixel output
@@ -293,10 +304,10 @@ func (p *PPU) doFetch(patternTableHalf types.Word) types.Word {
 }
 
 func (p *PPU) incrementDot() {
-	newDot := (p.dot + 1) % (maxDots + 1)
+	newDot := (p.dot + 1) % (maxDotsInALine + 1)
 	newLineVal := p.line
 
-	if p.oddFrame && newDot == (maxDots-1) && newLineVal == preRenderScanLine {
+	if p.oddFrame && newDot == (maxDotsInALine-1) && newLineVal == preRenderScanLine {
 		newDot = 0
 		newLineVal = 0
 	} else if newDot == 0 {
@@ -332,7 +343,7 @@ func (p *PPU) incrementY() {
 			coarseY += 1
 		}
 
-		p.currentVRAMAddr = (p.currentVRAMAddr &^ coarseXScrollMask) | (coarseY << coarseYScrollShift)
+		p.currentVRAMAddr = (p.currentVRAMAddr &^ coarseYScrollMask) | (coarseY << coarseYScrollShift)
 	}
 }
 
@@ -358,17 +369,65 @@ func (p *PPU) writePRGMemory(addr types.Word, value byte) {
 
 func (p *PPU) isCurrentlyRendering() bool {
 	isVisibleScanline := p.line < visibleScanlineMax
-	isVisibleDot := p.dot < visibleDotsMax
+	isVisibleDot := p.dot <= visibleDotsMax
 
-	return p.isRenderingEnabled() && isVisibleDot && isVisibleScanline
+	return p.isRenderingEnabled() && (isVisibleDot && isVisibleScanline)
 }
 
 func (p *PPU) isRenderingEnabled() bool {
-	return p.isBgRenderingEnabled() && p.isSpriteRenderingEnabled()
+	return p.isBgRenderingEnabled() || p.isSpriteRenderingEnabled()
 }
 
 func (p *PPU) calcPatternTableAddr(bitPlane, patternTableHalf types.Word) types.Word {
 	fineY := (p.currentVRAMAddr & fineYScrollMask) >> fineYScrollShift
 	tileNo := types.Word(p.nTDataLatch) << 4
 	return patternTableHalf | tileNo | bitPlane | fineY
+}
+
+func (p *PPU) DrawNametable() {
+	oldVramAddr := p.currentVRAMAddr
+	oldNtDataLatch := p.nTDataLatch
+	p.currentVRAMAddr = 0x00
+
+	for i := range totalDots {
+		ntAddr := 0x2000 | (p.currentVRAMAddr & 0x0FFF)
+		ntData := p.readPRGMemory(ntAddr)
+
+		atAddr := 0x23C0 | (p.currentVRAMAddr & 0x0C00) | ((p.currentVRAMAddr >> 4) & 0x38) | ((p.currentVRAMAddr >> 2) & 0x07)
+		atData := p.readPRGMemory(atAddr)
+
+		p.nTDataLatch = ntData
+		ptAddrLo := p.calcPatternTableAddr(0, p.getBackgroundPatternTableAddr())
+		pTDataLo := p.readPRGMemory(ptAddrLo)
+
+		ptAddrHi := p.calcPatternTableAddr(8, p.getBackgroundPatternTableAddr())
+		pTDataHi := p.readPRGMemory(ptAddrHi)
+
+		fineX := 7 - (i % 8) // to emulate shifting not actually scrolling
+		fineXBitSelect := byte(1) << fineX
+		tileLo := (pTDataLo & fineXBitSelect) >> fineX
+		tileHi := (pTDataHi & fineXBitSelect) >> fineX
+
+		coarseXBit1 := (p.currentVRAMAddr & coarseXScroll1Bit) >> coarseXScroll1Shift
+		coarseYBit1 := (p.currentVRAMAddr & coarseYScroll1Bit) >> coarseYScroll1Shift
+		atLoPos := coarseXBit1*2 + coarseYBit1*4
+		atHiPos := atLoPos + 1
+
+		attrLo := (atData & (1 << atLoPos)) >> byte(atLoPos)
+		attrHi := (atData & (1 << atHiPos)) >> byte(atHiPos)
+
+		paletteRAMIDx := bgPaletteMSB<<4 | attrHi<<3 | attrLo<<2 | tileHi<<1 | tileLo
+		p.VirtualDisplay[i] = p.getColorIdxFromPalette(paletteRAMIDx)
+
+		if i%8 == 7 {
+			p.incrementX()
+		}
+
+		if i%visibleDotsMax == 255 {
+			p.incrementY()
+		}
+	}
+
+	p.nTDataLatch = oldNtDataLatch
+	p.currentVRAMAddr = oldVramAddr
 }

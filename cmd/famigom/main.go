@@ -12,8 +12,6 @@ import (
 	"github.com/Zyko0/go-sdl3/sdl"
 )
 
-const s10 = 10000000000
-
 var logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 
 func main() {
@@ -53,7 +51,7 @@ func main() {
 		panic(err)
 	}
 
-	window, renderer, err := sdl.CreateWindowAndRenderer("Famigom", 512, 480, sdl.WINDOW_BORDERLESS)
+	window, renderer, err := sdl.CreateWindowAndRenderer("Famigom", 1024, 960, sdl.WINDOW_BORDERLESS)
 	if err != nil {
 		panic(err)
 	}
@@ -61,6 +59,10 @@ func main() {
 	defer renderer.Destroy()
 
 	nesScreenTex, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA32, sdl.TEXTUREACCESS_STREAMING, 256, 240)
+	if err != nil {
+		panic(err)
+	}
+	err = nesScreenTex.SetScaleMode(sdl.SCALEMODE_NEAREST)
 	if err != nil {
 		panic(err)
 	}
@@ -76,6 +78,8 @@ func main() {
 			case sdl.EVENT_KEY_DOWN:
 				if event.KeyboardEvent().Scancode == sdl.SCANCODE_ESCAPE {
 					return sdl.EndLoop
+				} else if event.KeyboardEvent().Scancode == sdl.SCANCODE_Z {
+					konsole.DrawNametable()
 				}
 			}
 		}

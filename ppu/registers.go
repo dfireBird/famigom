@@ -23,7 +23,7 @@ const (
 	coarseYScroll1Bit   = 0x40
 	coarseYScroll1Shift = 7
 
-	firstPPUAddrWriteMask = 0x1F
+	firstPPUAddrWriteMask = 0x3F
 	hiByteVRAMMask        = 0xFF00
 	loByteVRAMMask        = 0x00FF
 	hiByteVRAMShift       = 8
@@ -44,7 +44,7 @@ func (p *PPU) ReadMemory(addr types.Word) (bool, byte) {
 			returnData := p.ppuData
 
 			p.ppuData = p.readPRGMemory(p.currentVRAMAddr)
-			p.currentVRAMAddr += p.getVRAMAddrIncr()
+			p.currentVRAMAddr = (p.currentVRAMAddr + p.getVRAMAddrIncr()) % paletteRAMHiAddr
 			if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
 				returnData = p.ppuData
 			}
@@ -112,7 +112,7 @@ func (p *PPU) WriteMemory(addr types.Word, value byte) {
 
 		case PPUDATA:
 			p.writePRGMemory(p.currentVRAMAddr, value)
-			p.currentVRAMAddr += p.getVRAMAddrIncr()
+			p.currentVRAMAddr = (p.currentVRAMAddr + p.getVRAMAddrIncr()) % paletteRAMHiAddr
 		}
 
 	}
@@ -134,6 +134,10 @@ func (p *PPU) getBaseNametableAddr() types.Word {
 	}
 
 	return addr
+}
+
+func (p *PPU) getBaseNametableAttrAddr() types.Word {
+    return p.getBaseNametableAddr() + 0x03C0
 }
 
 func (p *PPU) getVRAMAddrIncr() types.Word {

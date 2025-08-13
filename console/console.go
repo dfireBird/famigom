@@ -88,11 +88,15 @@ func (c *Console) Step() {
 }
 
 func (c *Console) GetPixelData() []byte {
-	pixels := []byte{}
+	pixels := []byte(nil)
 	for _, colorIdx := range c.ppu.VirtualDisplay {
 		color := palette.GetColor(colorIdx)
-		pixels = append(pixels, 0xFF, color.B, color.G, color.R) // First byte is Alpha
+		pixels = append(pixels, color.R, color.G, color.B, 0xFF) // Last byte is Alpha
 	}
 
 	return pixels
+}
+
+func (c *Console) DrawNametable() {
+	c.ppu.DrawNametable()
 }

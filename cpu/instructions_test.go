@@ -1,4 +1,4 @@
-package cpu_test
+package cpu
 
 import "testing"
 

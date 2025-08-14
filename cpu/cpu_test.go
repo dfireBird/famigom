@@ -1,4 +1,4 @@
-package cpu_test
+package cpu
 
 import (
 	"encoding/json"
@@ -6,23 +6,22 @@ import (
 	"testing"
 
 	"github.com/dfirebird/famigom/bus"
-	"github.com/dfirebird/famigom/cpu"
-	. "github.com/dfirebird/famigom/types"
+	"github.com/dfirebird/famigom/types"
 )
 
 type ramValue struct {
-	addr  Word
+	addr  types.Word
 	value byte
 }
 
 type cycleState struct {
-	addr  Word
+	addr  types.Word
 	value byte
 	type_ string
 }
 
 type testCPUState struct {
-	pc  Word
+	pc  types.Word
 	s   byte
 	a   byte
 	x   byte
@@ -86,7 +85,7 @@ func runInstructionTest(t *testing.T, jsonFilePath string) {
 
 func parseTestData(jsonFilePath string) []testScenario {
 	parseCPUState := func(data map[string]any) testCPUState {
-		pc := Word(data["pc"].(float64))
+		pc := types.Word(data["pc"].(float64))
 		s := byte(data["s"].(float64))
 		a := byte(data["a"].(float64))
 		x := byte(data["x"].(float64))
@@ -96,7 +95,7 @@ func parseTestData(jsonFilePath string) []testScenario {
 		var ram []ramValue
 		for _, data := range data["ram"].([]any) {
 			ramData := data.([]any)
-			addr := Word(ramData[0].(float64))
+			addr := types.Word(ramData[0].(float64))
 			value := byte(ramData[1].(float64))
 
 			ram = append(ram, ramValue{
@@ -117,7 +116,7 @@ func parseTestData(jsonFilePath string) []testScenario {
 	}
 	parseCycle := func(data []any) cycleState {
 		return cycleState{
-			addr:  Word(data[0].(float64)),
+			addr:  types.Word(data[0].(float64)),
 			value: byte(data[1].(float64)),
 			type_: data[2].(string),
 		}
@@ -154,9 +153,7 @@ func parseTestData(jsonFilePath string) []testScenario {
 	return testScenarios
 }
 
-const maxMemory = (1 << 16)
-
-func createCPU(cpuState testCPUState) cpu.CPU {
+func createCPU(cpuState testCPUState) CPU {
 	memory := testMemoryBus{
 		memory: [maxMemory]byte{},
 	}
@@ -168,11 +165,11 @@ func createCPU(cpuState testCPUState) cpu.CPU {
 	memoryBus := bus.CreateMainBus()
 	memoryBus.RegisterDevice(&memory)
 
-	testCPU := cpu.CPU{
+	testCPU := CPU{
 		X:         cpuState.x,
 		Y:         cpuState.y,
 		A:         cpuState.a,
-		Flags:     cpu.Status(cpuState.p),
+		Flags:     Status(cpuState.p),
 		SP:        cpuState.s,
 		PC:        cpuState.pc,
 		MemoryBus: &memoryBus,
@@ -181,10 +178,10 @@ func createCPU(cpuState testCPUState) cpu.CPU {
 	return testCPU
 }
 
-func (b *testMemoryBus) ReadMemory(addr Word) (bool, byte) {
+func (b *testMemoryBus) ReadMemory(addr types.Word) (bool, byte) {
 	return true, b.memory[addr]
 }
 
-func (b *testMemoryBus) WriteMemory(addr Word, value byte) {
+func (b *testMemoryBus) WriteMemory(addr types.Word, value byte) {
 	b.memory[addr] = value
 }

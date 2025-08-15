@@ -1,9 +1,6 @@
 package console
 
 import (
-	"log"
-	"os"
-
 	"github.com/dfirebird/famigom/bus"
 	"github.com/dfirebird/famigom/cpu"
 	"github.com/dfirebird/famigom/cpu/ram"
@@ -11,12 +8,6 @@ import (
 	"github.com/dfirebird/famigom/palette"
 	"github.com/dfirebird/famigom/ppu"
 	"github.com/dfirebird/famigom/program"
-)
-
-var (
-	VERBOSE_LOGGING = false
-
-	logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 )
 
 const (
@@ -31,12 +22,7 @@ type Console struct {
 	mapperNum byte
 }
 
-func CreateConsole(romData *[]byte, verbose bool) (*Console, error) {
-	VERBOSE_LOGGING = verbose
-
-	if VERBOSE_LOGGING {
-		logger.Printf("Parsing ROM/Program file of size %d", len(*romData))
-	}
+func CreateConsole(romData *[]byte) (*Console, error) {
 	program, err := program.Parse(*romData)
 
 	if err != nil {
@@ -88,7 +74,7 @@ func (c *Console) Step() {
 }
 
 func (c *Console) GetPixelData() []byte {
-	pixels := []byte(nil)
+	pixels := make([]byte, 0, 256 * 240 * 4)
 	for _, colorIdx := range c.ppu.VirtualDisplay {
 		color := palette.GetColor(colorIdx)
 		pixels = append(pixels, color.R, color.G, color.B, 0xFF) // Last byte is Alpha

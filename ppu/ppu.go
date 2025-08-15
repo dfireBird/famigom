@@ -2,6 +2,7 @@ package ppu
 
 import (
 	"github.com/dfirebird/famigom/bus"
+	"github.com/dfirebird/famigom/log"
 	"github.com/dfirebird/famigom/program"
 	"github.com/dfirebird/famigom/types"
 )
@@ -154,6 +155,11 @@ func (p *PPU) RegisterDevice(d bus.PPUBusDevice) {
 }
 
 func (p *PPU) Step() {
+	log.GetLoggerWithSpan("ppu").Debugf("(x, y): (%03d, %03d) v: 0x%04X t: 0x%04X PPUCTRL: 0x%04X PPUMASK: 0x%04X PPUSTAT: 0x%04X pl: 0x%04X ph: 0x%04X ad: 0x%04X\n",
+		p.dot, p.line, p.currentVRAMAddr, p.tempVRAMAddr, p.ppuCtrl, p.ppuMask, p.getPPUStatus(),
+		p.currentTilePatternShiftRegisterLo, p.currentTilePatternShiftRegisterHi, p.currentTileAttributShiftRegister,
+	)
+
 	// FIXME: Do rendering of sprite pixels
 
 	if (visibleScanLineLo <= p.line && p.line <= visibleScanLineHi) || p.line == preRenderScanLine {

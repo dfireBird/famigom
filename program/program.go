@@ -3,11 +3,9 @@ package program
 import (
 	"bytes"
 	"fmt"
-	"log"
-	"os"
-)
 
-var logger = log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
+	"github.com/dfirebird/famigom/log"
+)
 
 type NametableArrangement int
 
@@ -43,6 +41,7 @@ type Program struct {
 }
 
 func Parse(romData []byte) (*Program, error) {
+	logger := log.GetLoggerWithSpan("rom")
 	seekIdx := uint(0)
 
 	if nesHeader := romData[:4]; !bytes.Equal(nesHeader, NES_HEADER) {
@@ -74,11 +73,11 @@ func Parse(romData []byte) (*Program, error) {
 
 	nametableArrangement := NametableArrangement(flags6 & 0x01)
 
-	logger.Printf("Reading Header")
-	logger.Printf("PRG ROM Bank Size %d", PrgRomBankSize)
-	logger.Printf("CHR ROM Bank Size %d", ChrRomBankSize)
-	logger.Printf("Mapper #%d", Mapper)
-	logger.Printf("Name Table Mirroring %v", nametableArrangement.GetMirroring())
+	logger.Infof("Reading Header")
+	logger.Infof("PRG ROM Bank Size %d", PrgRomBankSize)
+	logger.Infof("CHR ROM Bank Size %d", ChrRomBankSize)
+	logger.Infof("Mapper #%d", Mapper)
+	logger.Infof("Name Table Mirroring %v", nametableArrangement.GetMirroring())
 
 	isTrainerPresent := (flags6 & 0x04) == 0x04
 	if isTrainerPresent {
@@ -101,7 +100,7 @@ func Parse(romData []byte) (*Program, error) {
 		seekIdx += PLAYCHOICE_PROM_SIZE
 	}
 
-	logger.Printf("Read %d bytes of data", seekIdx)
+	logger.Infof("Read %d bytes of data", seekIdx)
 	program := Program{
 		Mapper:               Mapper,
 		PrgRomBankSize:       PrgRomBankSize,

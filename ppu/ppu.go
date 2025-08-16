@@ -264,9 +264,9 @@ func (p *PPU) outputPixel() {
 		tileLo := (p.currentTilePatternShiftRegisterLo & fineXBitSelect) >> shiftOfFineX
 		tileHi := (p.currentTilePatternShiftRegisterHi & fineXBitSelect) >> shiftOfFineX
 
-		coarseXBit1 := (p.currentVRAMAddr & coarseXScroll1Bit) >> coarseXScroll1Shift
-		coarseYBit1 := (p.currentVRAMAddr & coarseYScroll1Bit) >> coarseYScroll1Shift
-		atLoPos := coarseXBit1*2 + coarseYBit1*4
+		coarseX := (p.dot - 1) / 8
+		coarseY := p.line / 8
+		atLoPos := (coarseX & 0x02) + ((coarseY & 0x02) << 1)
 		atHiPos := atLoPos + 1
 
 		attrLo := (p.currentTileAttributShiftRegister & (1 << atLoPos)) >> byte(atLoPos)

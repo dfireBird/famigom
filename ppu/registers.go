@@ -36,25 +36,35 @@ func (p *PPU) ReadMemory(addr types.Word) (bool, byte) {
 		case PPUSTATUS:
 			status := p.getPPUStatus()
 
+			decayRegister := status &^ 0x1F
+			status = status | (p.openBusDecayRegister & 0x1F)
+			p.openBusDecayRegister = decayRegister
+			p.openBusDecayTime = dotsToDecayOpenBusReg
+
 			p.vblankFlag = false
 			p.isFirstWrite = true
 
 			return true, status
 		case OAMDATA:
+			p.openBusDecayRegister = p.oamMemory[p.oamAddr]
+			p.openBusDecayTime = dotsToDecayOpenBusReg
 			return true, p.oamMemory[p.oamAddr]
 		case PPUDATA:
 			returnData := p.ppuData
 
 			p.ppuData = p.readPRGMemory(p.currentVRAMAddr)
 			if paletteRAMLoAddr <= p.currentVRAMAddr && p.currentVRAMAddr <= paletteRAMHiAddr {
-				returnData = p.ppuData
-				p.ppuData = p.readPRGMemory((p.currentVRAMAddr&0xFFF) | 0x2000)
+				returnData = (p.openBusDecayRegister & 0xC0) | p.ppuData
+				p.ppuData = p.readPRGMemory((p.currentVRAMAddr & 0xFFF) | 0x2000)
 			}
 
 			p.currentVRAMAddr = (p.currentVRAMAddr + p.getVRAMAddrIncr()) % paletteRAMHiAddr
+
+			p.openBusDecayRegister = returnData
+			p.openBusDecayTime = dotsToDecayOpenBusReg
 			return true, returnData
 		default:
-			return true, 0xFF
+			return true, p.openBusDecayRegister
 		}
 	}
 	return false, 0
@@ -118,6 +128,8 @@ func (p *PPU) WriteMemory(addr types.Word, value byte) {
 			p.currentVRAMAddr = (p.currentVRAMAddr + p.getVRAMAddrIncr()) % paletteRAMHiAddr
 		}
 
+		p.openBusDecayRegister = value
+		p.openBusDecayTime = dotsToDecayOpenBusReg
 	}
 }
 
@@ -140,7 +152,7 @@ func (p *PPU) getBaseNametableAddr() types.Word {
 }
 
 func (p *PPU) getBaseNametableAttrAddr() types.Word {
-    return p.getBaseNametableAddr() + 0x03C0
+	return p.getBaseNametableAddr() + 0x03C0
 }
 
 func (p *PPU) getVRAMAddrIncr() types.Word {

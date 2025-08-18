@@ -46,6 +46,8 @@ const (
 
 	spritePaletteMSB = 1
 	bgPaletteMSB     = 0
+
+	dotsToDecayOpenBusReg = 3221591
 )
 
 type SpriteSize byte
@@ -105,6 +107,9 @@ type PPU struct {
 	currentTilePatternShiftRegisterHi byte
 	currentTileAttributShiftRegister  byte
 
+	openBusDecayRegister byte
+	openBusDecayTime     uint32
+
 	VirtualDisplay [totalDots]byte
 }
 
@@ -160,8 +165,13 @@ func (p *PPU) Step() {
 		p.currentTilePatternShiftRegisterLo, p.currentTilePatternShiftRegisterHi, p.currentTileAttributShiftRegister,
 	)
 
-	// FIXME: Do rendering of sprite pixels
+	if p.openBusDecayTime == 0 {
+		p.openBusDecayRegister = 0
+	} else {
+		p.openBusDecayTime -= 1
+	}
 
+	// FIXME: Do rendering of sprite pixels
 	if (visibleScanLineLo <= p.line && p.line <= visibleScanLineHi) || p.line == preRenderScanLine {
 		if p.dot == 0 {
 			p.incrementDot()

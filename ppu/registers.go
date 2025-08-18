@@ -40,15 +40,18 @@ func (p *PPU) ReadMemory(addr types.Word) (bool, byte) {
 			p.isFirstWrite = true
 
 			return true, status
+		case OAMDATA:
+			return true, p.oamMemory[p.oamAddr]
 		case PPUDATA:
 			returnData := p.ppuData
 
 			p.ppuData = p.readPRGMemory(p.currentVRAMAddr)
-			p.currentVRAMAddr = (p.currentVRAMAddr + p.getVRAMAddrIncr()) % paletteRAMHiAddr
-			if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
+			if paletteRAMLoAddr <= p.currentVRAMAddr && p.currentVRAMAddr <= paletteRAMHiAddr {
 				returnData = p.ppuData
+				p.ppuData = p.readPRGMemory((p.currentVRAMAddr&0xFFF) | 0x2000)
 			}
 
+			p.currentVRAMAddr = (p.currentVRAMAddr + p.getVRAMAddrIncr()) % paletteRAMHiAddr
 			return true, returnData
 		default:
 			return true, 0xFF

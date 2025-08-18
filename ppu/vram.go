@@ -57,7 +57,7 @@ func (p *PaletteRAM) ReadPRGMemory(addr types.Word) (bool, byte) {
 	if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
 		idx := (addr - paletteRAMLoAddr) & 31
 		if idx%4 == 0 {
-			return true, p.data[0]
+			return true, p.data[idx&0x0F]
 		}
 		return true, p.data[idx]
 	}
@@ -68,7 +68,7 @@ func (p *PaletteRAM) WritePRGMemory(addr types.Word, value byte) {
 	if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
 		idx := (addr - paletteRAMLoAddr) & 31
 		if idx%4 == 0 {
-			p.data[0] = value
+			p.data[idx&0x0F] = value
 		} else {
 			p.data[idx] = value
 		}

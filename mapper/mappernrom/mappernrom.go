@@ -81,14 +81,14 @@ func (m *MapperNROM) WriteMemory(addr Word, value byte) {
 	}
 }
 
-func (m *MapperNROM) ReadPRGMemory(addr Word) (bool, byte) {
+func (m *MapperNROM) ReadCHRMemory(addr Word) (bool, byte) {
 	if lowChrRomAddr <= addr && addr <= hiChrRomAddr {
 		return true, m.chrRom[addr]
 	}
 	return false, 0
 }
 
-func (m *MapperNROM) WritePRGMemory(addr Word, value byte) {
+func (m *MapperNROM) WriteCHRMemory(addr Word, value byte) {
 	if lowChrRomAddr <= addr && addr <= hiChrRomAddr {
 		m.chrRom[addr] = value
 	}

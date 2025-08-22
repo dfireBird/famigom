@@ -3,8 +3,8 @@ package bus
 import "github.com/dfirebird/famigom/types"
 
 type PPUBusDevice interface {
-	ReadPRGMemory(addr types.Word) (bool, byte)
-	WritePRGMemory(addr types.Word, value byte)
+	ReadCHRMemory(addr types.Word) (bool, byte)
+	WriteCHRMemory(addr types.Word, value byte)
 }
 
 type PPUBus struct {
@@ -17,9 +17,9 @@ func NewPPUBus() PPUBus {
 	}
 }
 
-func (b *PPUBus) ReadPRGMemory(addr types.Word) byte {
+func (b *PPUBus) ReadCHRMemory(addr types.Word) byte {
 	for _, device := range b.devicesMap {
-		if isRead, value := (*device).ReadPRGMemory(addr); isRead {
+		if isRead, value := (*device).ReadCHRMemory(addr); isRead {
 			return value
 		}
 	}
@@ -27,9 +27,9 @@ func (b *PPUBus) ReadPRGMemory(addr types.Word) byte {
 	return 0xFF
 }
 
-func (b *PPUBus) WritePRGMemory(addr types.Word, value byte) {
+func (b *PPUBus) WriteCHRMemory(addr types.Word, value byte) {
 	for _, device := range b.devicesMap {
-		(*device).WritePRGMemory(addr, value)
+		(*device).WriteCHRMemory(addr, value)
 	}
 }
 

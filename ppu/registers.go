@@ -46,16 +46,17 @@ func (p *PPU) ReadMemory(addr types.Word) (bool, byte) {
 
 			return true, status
 		case OAMDATA:
-			p.openBusDecayRegister = p.oamMemory[p.oamAddr]
+			readVal := p.readOAMMemory(p.oamAddr)
+			p.openBusDecayRegister = readVal
 			p.openBusDecayTime = dotsToDecayOpenBusReg
-			return true, p.oamMemory[p.oamAddr]
+			return true, readVal
 		case PPUDATA:
 			returnData := p.ppuData
 
-			p.ppuData = p.readPRGMemory(p.currentVRAMAddr)
+			p.ppuData = p.readCHRMemory(p.currentVRAMAddr)
 			if paletteRAMLoAddr <= p.currentVRAMAddr && p.currentVRAMAddr <= paletteRAMHiAddr {
 				returnData = (p.openBusDecayRegister & 0xC0) | p.ppuData
-				p.ppuData = p.readPRGMemory((p.currentVRAMAddr & 0xFFF) | 0x2000)
+				p.ppuData = p.readCHRMemory((p.currentVRAMAddr & 0xFFF) | 0x2000)
 			}
 
 			p.currentVRAMAddr = (p.currentVRAMAddr + p.getVRAMAddrIncr()) % paletteRAMHiAddr
@@ -89,7 +90,7 @@ func (p *PPU) WriteMemory(addr types.Word, value byte) {
 			p.oamAddr = value
 
 		case OAMDATA:
-			p.oamMemory[p.oamAddr] = value
+			p.writeOAMMemory(p.oamAddr, value)
 			p.oamAddr += 1
 
 		case PPUSCROLL:
@@ -124,7 +125,7 @@ func (p *PPU) WriteMemory(addr types.Word, value byte) {
 			p.isFirstWrite = !p.isFirstWrite
 
 		case PPUDATA:
-			p.writePRGMemory(p.currentVRAMAddr, value)
+			p.writeCHRMemory(p.currentVRAMAddr, value)
 			p.currentVRAMAddr = (p.currentVRAMAddr + p.getVRAMAddrIncr()) % paletteRAMHiAddr
 		}
 

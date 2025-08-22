@@ -256,9 +256,9 @@ func (p *PPU) Step() {
 func (p *PPU) GetBackdropColorIdx() byte {
 	var colorIdx byte
 	if paletteRAMLoAddr <= p.currentVRAMAddr && p.currentVRAMAddr <= paletteRAMHiAddr {
-		colorIdx = p.readPRGMemory(p.currentVRAMAddr)
+		colorIdx = p.readCHRMemory(p.currentVRAMAddr)
 	} else {
-		colorIdx = p.readPRGMemory(paletteRAMLoAddr)
+		colorIdx = p.readCHRMemory(paletteRAMLoAddr)
 	}
 
 	return colorIdx
@@ -299,16 +299,16 @@ func (p *PPU) doFetch(patternTableHalf types.Word) types.Word {
 	switch localizedDot {
 	case 2:
 		ntAddr := 0x2000 | (p.currentVRAMAddr & 0x0FFF)
-		p.nTDataLatch = p.readPRGMemory(ntAddr)
+		p.nTDataLatch = p.readCHRMemory(ntAddr)
 	case 4:
 		atAddr := 0x23C0 | (p.currentVRAMAddr & 0x0C00) | ((p.currentVRAMAddr >> 4) & 0x38) | ((p.currentVRAMAddr >> 2) & 0x07)
-		p.aTDataLatch = p.readPRGMemory(atAddr)
+		p.aTDataLatch = p.readCHRMemory(atAddr)
 	case 6:
 		ptAddr := p.calcPatternTableAddr(0, patternTableHalf)
-		p.patternDataLoLatch = p.readPRGMemory(ptAddr)
+		p.patternDataLoLatch = p.readCHRMemory(ptAddr)
 	case 8:
 		ptAddr := p.calcPatternTableAddr(8, patternTableHalf)
-		p.patternDataHiLatch = p.readPRGMemory(ptAddr)
+		p.patternDataHiLatch = p.readCHRMemory(ptAddr)
 		p.incrementX()
 	}
 
@@ -364,7 +364,7 @@ func (p *PPU) incrementY() {
 }
 
 func (p *PPU) getColorIdxFromPalette(paletteRAMIdx byte) byte {
-	return p.readPRGMemory(paletteRAMLoAddr | types.Word(paletteRAMIdx))
+	return p.readCHRMemory(paletteRAMLoAddr | types.Word(paletteRAMIdx))
 }
 
 func (p *PPU) readOAMMemory(addr byte) byte {
@@ -375,12 +375,12 @@ func (p *PPU) writeOAMMemory(addr, value byte) {
 	p.oamMemory[addr] = value
 }
 
-func (p *PPU) readPRGMemory(addr types.Word) byte {
-	return p.chrMemoryBus.ReadPRGMemory(addr)
+func (p *PPU) readCHRMemory(addr types.Word) byte {
+	return p.chrMemoryBus.ReadCHRMemory(addr)
 }
 
-func (p *PPU) writePRGMemory(addr types.Word, value byte) {
-	p.chrMemoryBus.WritePRGMemory(addr, value)
+func (p *PPU) writeCHRMemory(addr types.Word, value byte) {
+	p.chrMemoryBus.WriteCHRMemory(addr, value)
 }
 
 func (p *PPU) isCurrentlyRendering() bool {
@@ -407,17 +407,17 @@ func (p *PPU) DrawNametable() {
 
 	for i := range totalDots {
 		ntAddr := 0x2000 | (p.currentVRAMAddr & 0x0FFF)
-		ntData := p.readPRGMemory(ntAddr)
+		ntData := p.readCHRMemory(ntAddr)
 
 		atAddr := 0x23C0 | (p.currentVRAMAddr & 0x0C00) | ((p.currentVRAMAddr >> 4) & 0x38) | ((p.currentVRAMAddr >> 2) & 0x07)
-		atData := p.readPRGMemory(atAddr)
+		atData := p.readCHRMemory(atAddr)
 
 		p.nTDataLatch = ntData
 		ptAddrLo := p.calcPatternTableAddr(0, p.getBackgroundPatternTableAddr())
-		pTDataLo := p.readPRGMemory(ptAddrLo)
+		pTDataLo := p.readCHRMemory(ptAddrLo)
 
 		ptAddrHi := p.calcPatternTableAddr(8, p.getBackgroundPatternTableAddr())
-		pTDataHi := p.readPRGMemory(ptAddrHi)
+		pTDataHi := p.readCHRMemory(ptAddrHi)
 
 		fineX := 7 - (i % 8) // to emulate shifting not actually scrolling
 		fineXBitSelect := byte(1) << fineX

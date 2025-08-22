@@ -21,7 +21,7 @@ type VRAM struct {
 	data      [maxVRAMSize]byte
 }
 
-func (v *VRAM) ReadPRGMemory(addr types.Word) (bool, byte) {
+func (v *VRAM) ReadCHRMemory(addr types.Word) (bool, byte) {
 	if vramLoAddr <= addr && addr <= vramHiAddr {
 		idx := v.getNTAddrWithMirroring(addr)
 		return true, v.data[idx]
@@ -30,7 +30,7 @@ func (v *VRAM) ReadPRGMemory(addr types.Word) (bool, byte) {
 	return false, 0
 }
 
-func (v *VRAM) WritePRGMemory(addr types.Word, value byte) {
+func (v *VRAM) WriteCHRMemory(addr types.Word, value byte) {
 	if vramLoAddr <= addr && addr <= vramHiAddr {
 		idx := v.getNTAddrWithMirroring(addr)
 		v.data[idx] = value
@@ -53,7 +53,7 @@ type PaletteRAM struct {
 	data [32]byte
 }
 
-func (p *PaletteRAM) ReadPRGMemory(addr types.Word) (bool, byte) {
+func (p *PaletteRAM) ReadCHRMemory(addr types.Word) (bool, byte) {
 	if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
 		idx := (addr - paletteRAMLoAddr) & 31
 		if idx%4 == 0 {
@@ -64,7 +64,7 @@ func (p *PaletteRAM) ReadPRGMemory(addr types.Word) (bool, byte) {
 	return false, 0
 }
 
-func (p *PaletteRAM) WritePRGMemory(addr types.Word, value byte) {
+func (p *PaletteRAM) WriteCHRMemory(addr types.Word, value byte) {
 	if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
 		idx := (addr - paletteRAMLoAddr) & 31
 		if idx%4 == 0 {

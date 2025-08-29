@@ -193,8 +193,8 @@ func (p *PPU) getSpriteSize() SpriteSize {
 
 func (p *PPU) getPPUStatus() (ppuStatus byte) {
 	ppuStatus |= boolToByte(p.vblankFlag) << 7
-	ppuStatus |= boolToByte(p.spite0Hit) << 6
-	ppuStatus |= boolToByte(p.spiteOverflow) << 5
+	ppuStatus |= boolToByte(p.sprite0Hit) << 6
+	ppuStatus |= boolToByte(p.spriteOverflow) << 5
 	return
 }
 
@@ -205,6 +205,16 @@ func (p *PPU) isNMIEnabled() bool {
 
 func (p *PPU) isGreyscale() bool {
 	const mask byte = 0x01
+	return p.ppuMask&mask == mask
+}
+
+func (p *PPU) isLeftClipBg() bool {
+    const mask byte = 0x02
+	return p.ppuMask&mask == mask
+}
+
+func (p *PPU) isLeftClipSprite() bool {
+    const mask byte = 0x04
 	return p.ppuMask&mask == mask
 }
 

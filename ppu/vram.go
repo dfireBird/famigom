@@ -57,7 +57,7 @@ func (p *PaletteRAM) ReadCHRMemory(addr types.Word) (bool, byte) {
 	if paletteRAMLoAddr <= addr && addr <= paletteRAMHiAddr {
 		idx := (addr - paletteRAMLoAddr) & 31
 		if idx%4 == 0 {
-			return true, p.data[idx&0x0F]
+			return true, p.data[0]
 		}
 		return true, p.data[idx]
 	}

@@ -11,7 +11,8 @@ const (
 	ioLoAddr = 0x2000
 	ioHiAddr = 0x3FFF
 
-	oamMemorySize = 256
+	oamMemorySize    = 256
+	secondaryOAMSize = 32
 
 	visibleScanlineMax = 240
 	visibleDotsMax     = 256
@@ -48,6 +49,8 @@ const (
 	bgPaletteMSB     = 0
 
 	dotsToDecayOpenBusReg = 3221591
+
+	spritePritorityMask = 0x20
 )
 
 type SpriteSize byte
@@ -72,9 +75,9 @@ type PPU struct {
 	ppuCtrl byte
 	ppuMask byte
 
-	spiteOverflow bool
-	spite0Hit     bool
-	vblankFlag    bool
+	spriteOverflow bool
+	sprite0Hit     bool
+	vblankFlag     bool
 
 	oamAddr byte
 
@@ -110,6 +113,12 @@ type PPU struct {
 	openBusDecayRegister byte
 	openBusDecayTime     uint32
 
+	secondaryOAM      [secondaryOAMSize]byte
+	secondaryOAMIdx   byte
+	spriteIdx         byte
+	spritePatternData [secondaryOAMSize]byte
+	sprite0InNextLine bool
+
 	VirtualDisplay [totalDots]byte
 }
 
@@ -143,8 +152,8 @@ func (p *PPU) PowerUp() {
 	p.ppuCtrl = 0
 	p.ppuMask = 0
 	p.vblankFlag = true
-	p.spite0Hit = false
-	p.spiteOverflow = true
+	p.sprite0Hit = false
+	p.spriteOverflow = true
 
 	p.oamAddr = 0
 
@@ -160,10 +169,11 @@ func (p *PPU) RegisterDevice(d bus.PPUBusDevice) {
 }
 
 func (p *PPU) Step() {
-	log.GetLoggerWithSpan("ppu").Debugf("(x, y): (%03d, %03d) v: 0x%04X t: 0x%04X PPUCTRL: 0x%04X PPUMASK: 0x%04X PPUSTAT: 0x%04X pl: 0x%04X ph: 0x%04X ad: 0x%04X\n",
+	log.GetLoggerWithSpan("ppu").Debugf("(x, y): (%03d, %03d) v: 0x%04X t: 0x%04X PPUCTRL: 0x%04X PPUMASK: 0x%04X PPUSTAT: 0x%04X pl: 0x%04X ph: 0x%04X ad: 0x%04X",
 		p.dot, p.line, p.currentVRAMAddr, p.tempVRAMAddr, p.ppuCtrl, p.ppuMask, p.getPPUStatus(),
 		p.currentTilePatternShiftRegisterLo, p.currentTilePatternShiftRegisterHi, p.currentTileAttributShiftRegister,
 	)
+	log.GetLoggerWithSpan("ppu").Debugln(p.secondaryOAM)
 
 	if p.openBusDecayTime == 0 {
 		p.openBusDecayRegister = 0
@@ -180,8 +190,8 @@ func (p *PPU) Step() {
 
 		if p.line == preRenderScanLine && p.dot == 1 {
 			p.vblankFlag = false
-			p.spite0Hit = false
-			p.spiteOverflow = false
+			p.sprite0Hit = false
+			p.spriteOverflow = false
 		}
 
 		if p.isCurrentlyRendering() {
@@ -201,10 +211,11 @@ func (p *PPU) Step() {
 					p.nextTileAttributShiftRegister = p.aTDataLatch
 				}
 			}
+			p.spriteEvaulvation()
 		}
 
 		if p.isRenderingEnabled() && (spriteDotLo <= p.dot && p.dot <= spirteDotHi) {
-			// FIXME: sprites
+			p.doSpriteFetch()
 		}
 
 		if p.isRenderingEnabled() && (tilesForNextScanLineLo <= p.dot && p.dot <= tilesForNextScanLineHi) {
@@ -267,6 +278,7 @@ func (p *PPU) GetBackdropColorIdx() byte {
 func (p *PPU) outputPixel() {
 	paletteRAMIDx := byte(0)
 	displayIdx := (p.line*visibleDotsMax + p.dot) - 1
+	isBgOpaque := false
 
 	if p.isBgRenderingEnabled() {
 		shiftOfFineX := (7 - (p.fineX % 8))
@@ -282,13 +294,53 @@ func (p *PPU) outputPixel() {
 		attrLo := (p.currentTileAttributShiftRegister & (1 << atLoPos)) >> byte(atLoPos)
 		attrHi := (p.currentTileAttributShiftRegister & (1 << atHiPos)) >> byte(atHiPos)
 
+		isBgOpaque = (tileHi<<1 | tileLo) != 0
+
 		paletteRAMIDx = bgPaletteMSB<<4 | attrHi<<3 | attrLo<<2 | tileHi<<1 | tileLo
 
 		p.currentTilePatternShiftRegisterLo = (p.currentTilePatternShiftRegisterLo << 1) | 1
 		p.currentTilePatternShiftRegisterHi = (p.currentTilePatternShiftRegisterHi << 1) | 1
 	}
 
-	// FIXME: Do Sprite Pixel output
+	if p.isSpriteRenderingEnabled() {
+		spritePaletteRAMIdx := byte(0)
+		for i := range byte(8) {
+			dotVal := p.dot - 1
+			xCoord := uint16(p.spritePatternData[i*4+0])
+			priority := p.spritePatternData[i*4+1] & spritePritorityMask
+
+			isInXCoordRange := xCoord <= dotVal && dotVal <= xCoord+7
+			if xCoord != 0xFF && isInXCoordRange {
+				attribute := p.spritePatternData[i*4+1] & 0x3
+				spritePtDataLo := &p.spritePatternData[i*4+2]
+				spritePtDataHi := &p.spritePatternData[i*4+3]
+
+				shift := 7
+				bitSelect := byte(1) << shift
+				tileLo := (*spritePtDataLo & bitSelect) >> shift
+				tileHi := (*spritePtDataHi & bitSelect) >> shift
+
+				log.GetLoggerWithSpan("ppu").Debugf("x: %d, tl: 0b%08b th: 0b%08b at: 0b%02b", xCoord, *spritePtDataLo, *spritePtDataHi, attribute)
+
+				*spritePtDataLo = (*spritePtDataLo << 1) | 1
+				*spritePtDataHi = (*spritePtDataHi << 1) | 1
+
+				isSpriteOpaque := (tileHi<<1 | tileLo) != 0
+
+				isLeftClip := (p.isLeftClipBg() || p.isLeftClipSprite()) && (dotVal <= 7)
+				isRightEdge := p.dot >= 256
+				if !p.sprite0Hit && i == 0 && p.sprite0InNextLine && !isLeftClip && !isRightEdge && isBgOpaque && isSpriteOpaque {
+					p.sprite0Hit = true
+				}
+
+				if spritePaletteRAMIdx == 0 && isSpriteOpaque && priority == 0 {
+					spritePaletteRAMIdx = spritePaletteMSB<<4 | attribute<<2 | tileHi<<1 | tileLo
+					paletteRAMIDx = spritePaletteMSB<<4 | attribute<<2 | tileHi<<1 | tileLo
+				}
+			}
+		}
+	}
+
 	p.VirtualDisplay[displayIdx] = p.getColorIdxFromPalette(paletteRAMIDx)
 }
 
@@ -368,7 +420,11 @@ func (p *PPU) getColorIdxFromPalette(paletteRAMIdx byte) byte {
 }
 
 func (p *PPU) readOAMMemory(addr byte) byte {
-	return p.oamMemory[addr]
+	value := p.oamMemory[addr]
+	if addr%4 == 2 {
+		value &= 0b1110_0011
+	}
+	return value
 }
 
 func (p *PPU) writeOAMMemory(addr, value byte) {

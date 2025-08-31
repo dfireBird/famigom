@@ -102,13 +102,10 @@ type PPU struct {
 	patternDataLoLatch byte
 	patternDataHiLatch byte
 
-	nextTilePatternShiftRegisterLo byte
-	nextTilePatternShiftRegisterHi byte
-	nextTileAttributShiftRegister  byte
-
-	currentTilePatternShiftRegisterLo byte
-	currentTilePatternShiftRegisterHi byte
-	currentTileAttributShiftRegister  byte
+	tilePatternShiftRegisterLo   types.Word
+	tilePatternShiftRegisterHi   types.Word
+	tileAttributeShiftRegisterLo types.Word
+	tileAttributeShiftRegisterHi types.Word
 
 	openBusDecayRegister byte
 	openBusDecayTime     uint32
@@ -169,11 +166,11 @@ func (p *PPU) RegisterDevice(d bus.PPUBusDevice) {
 }
 
 func (p *PPU) Step() {
-	log.GetLoggerWithSpan("ppu").Debugf("(x, y): (%03d, %03d) v: 0x%04X t: 0x%04X PPUCTRL: 0x%04X PPUMASK: 0x%04X PPUSTAT: 0x%04X pl: 0x%04X ph: 0x%04X ad: 0x%04X",
+	log.GetLoggerWithSpan("ppu").Debugf("(x, y): (%03d, %03d) v: 0x%04X t: 0x%04X PPUCTRL: 0x%04X PPUMASK: 0x%04X PPUSTAT: 0x%04X ND: 0x%02X AD: 0x%02X pl: 0x%04X ph: 0x%04X al: 0x%04X ah: 0x%04X",
 		p.dot, p.line, p.currentVRAMAddr, p.tempVRAMAddr, p.ppuCtrl, p.ppuMask, p.getPPUStatus(),
-		p.currentTilePatternShiftRegisterLo, p.currentTilePatternShiftRegisterHi, p.currentTileAttributShiftRegister,
+		p.nTDataLatch, p.aTDataLatch, p.tilePatternShiftRegisterLo, p.tilePatternShiftRegisterHi,
+		p.tileAttributeShiftRegisterLo, p.tileAttributeShiftRegisterHi,
 	)
-	log.GetLoggerWithSpan("ppu").Debugln(p.secondaryOAM)
 
 	if p.openBusDecayTime == 0 {
 		p.openBusDecayRegister = 0
@@ -200,16 +197,16 @@ func (p *PPU) Step() {
 
 		if p.isRenderingEnabled() && (1 <= p.dot && p.dot <= visibleDotsMax) {
 			ld := p.doFetch(p.getBackgroundPatternTableAddr())
-			if ld == 8 {
-				p.currentTilePatternShiftRegisterLo = p.nextTilePatternShiftRegisterLo
-				p.currentTilePatternShiftRegisterHi = p.nextTilePatternShiftRegisterHi
-				p.currentTileAttributShiftRegister = p.nextTileAttributShiftRegister
+			if ld == 8 && 1 <= p.dot && p.dot <= dotsTillFetchesUsed {
+				p.tilePatternShiftRegisterLo &= 0xFF00
+				p.tilePatternShiftRegisterHi &= 0xFF00
+				p.tileAttributeShiftRegisterLo &= 0xFF00
+				p.tileAttributeShiftRegisterHi &= 0xFF00
 
-				if 1 <= p.dot && p.dot <= dotsTillFetchesUsed {
-					p.nextTilePatternShiftRegisterLo = p.patternDataLoLatch
-					p.nextTilePatternShiftRegisterHi = p.patternDataHiLatch
-					p.nextTileAttributShiftRegister = p.aTDataLatch
-				}
+				p.tilePatternShiftRegisterLo |= types.Word(p.patternDataLoLatch)
+				p.tilePatternShiftRegisterHi |= types.Word(p.patternDataHiLatch)
+				p.tileAttributeShiftRegisterLo |= types.Word(extractNthBitAndRepeat(0, p.aTDataLatch))
+				p.tileAttributeShiftRegisterHi |= types.Word(extractNthBitAndRepeat(1, p.aTDataLatch))
 			}
 			p.spriteEvaulvation()
 		}
@@ -222,15 +219,17 @@ func (p *PPU) Step() {
 			p.doFetch(p.getBackgroundPatternTableAddr())
 
 			if p.dot == nextScanline1stTileDot {
-				p.currentTilePatternShiftRegisterLo = p.patternDataLoLatch
-				p.currentTilePatternShiftRegisterHi = p.patternDataHiLatch
-				p.currentTileAttributShiftRegister = p.aTDataLatch
+				p.tilePatternShiftRegisterLo = types.Word(p.patternDataLoLatch) << 8
+				p.tilePatternShiftRegisterHi = types.Word(p.patternDataHiLatch) << 8
+				p.tileAttributeShiftRegisterLo = types.Word(extractNthBitAndRepeat(0, p.aTDataLatch)) << 8
+				p.tileAttributeShiftRegisterHi = types.Word(extractNthBitAndRepeat(1, p.aTDataLatch)) << 8
 			}
 
 			if p.dot == nextScanline2ndTileDot {
-				p.nextTilePatternShiftRegisterLo = p.patternDataLoLatch
-				p.nextTilePatternShiftRegisterHi = p.patternDataHiLatch
-				p.nextTileAttributShiftRegister = p.aTDataLatch
+				p.tilePatternShiftRegisterLo |= types.Word(p.patternDataLoLatch)
+				p.tilePatternShiftRegisterHi |= types.Word(p.patternDataHiLatch)
+				p.tileAttributeShiftRegisterLo |= types.Word(extractNthBitAndRepeat(0, p.aTDataLatch))
+				p.tileAttributeShiftRegisterHi |= types.Word(extractNthBitAndRepeat(1, p.aTDataLatch))
 			}
 		}
 
@@ -281,25 +280,23 @@ func (p *PPU) outputPixel() {
 	isBgOpaque := false
 
 	if p.isBgRenderingEnabled() {
-		shiftOfFineX := (7 - (p.fineX % 8))
-		fineXBitSelect := byte(1) << shiftOfFineX // to make fineX value 0 to pull out MSB
-		tileLo := (p.currentTilePatternShiftRegisterLo & fineXBitSelect) >> shiftOfFineX
-		tileHi := (p.currentTilePatternShiftRegisterHi & fineXBitSelect) >> shiftOfFineX
+		shiftOfFineX := types.Word(15 - (p.fineX % 8))
+		fineXBitSelect := types.Word(1) << shiftOfFineX // to make fineX value 0 to pull out MSB
+		tileLo := (p.tilePatternShiftRegisterLo & fineXBitSelect) >> shiftOfFineX
+		tileHi := (p.tilePatternShiftRegisterHi & fineXBitSelect) >> shiftOfFineX
 
-		coarseX := (p.dot - 1) / 8
-		coarseY := p.line / 8
-		atLoPos := (coarseX & 0x02) + ((coarseY & 0x02) << 1)
-		atHiPos := atLoPos + 1
-
-		attrLo := (p.currentTileAttributShiftRegister & (1 << atLoPos)) >> byte(atLoPos)
-		attrHi := (p.currentTileAttributShiftRegister & (1 << atHiPos)) >> byte(atHiPos)
+		attrLo := (p.tileAttributeShiftRegisterLo & fineXBitSelect) >> shiftOfFineX
+		attrHi := (p.tileAttributeShiftRegisterHi & fineXBitSelect) >> shiftOfFineX
+		log.GetLoggerWithSpan("ppu").Debugf("Attribute: %d %d", attrHi, attrLo)
 
 		isBgOpaque = (tileHi<<1 | tileLo) != 0
 
-		paletteRAMIDx = bgPaletteMSB<<4 | attrHi<<3 | attrLo<<2 | tileHi<<1 | tileLo
+		paletteRAMIDx = byte(bgPaletteMSB<<4 | attrHi<<3 | attrLo<<2 | tileHi<<1 | tileLo)
 
-		p.currentTilePatternShiftRegisterLo = (p.currentTilePatternShiftRegisterLo << 1) | 1
-		p.currentTilePatternShiftRegisterHi = (p.currentTilePatternShiftRegisterHi << 1) | 1
+		p.tilePatternShiftRegisterLo = (p.tilePatternShiftRegisterLo << 1) | 1
+		p.tilePatternShiftRegisterHi = (p.tilePatternShiftRegisterHi << 1) | 1
+		p.tileAttributeShiftRegisterLo = (p.tileAttributeShiftRegisterLo << 1) | 1
+		p.tileAttributeShiftRegisterHi = (p.tileAttributeShiftRegisterHi << 1) | 1
 	}
 
 	if p.isSpriteRenderingEnabled() {
@@ -354,7 +351,7 @@ func (p *PPU) doFetch(patternTableHalf types.Word) types.Word {
 		p.nTDataLatch = p.readCHRMemory(ntAddr)
 	case 4:
 		atAddr := 0x23C0 | (p.currentVRAMAddr & 0x0C00) | ((p.currentVRAMAddr >> 4) & 0x38) | ((p.currentVRAMAddr >> 2) & 0x07)
-		p.aTDataLatch = p.readCHRMemory(atAddr)
+		p.aTDataLatch = p.extractBgAttr(p.readCHRMemory(atAddr))
 	case 6:
 		ptAddr := p.calcPatternTableAddr(0, patternTableHalf)
 		p.patternDataLoLatch = p.readCHRMemory(ptAddr)
@@ -413,6 +410,16 @@ func (p *PPU) incrementY() {
 
 		p.currentVRAMAddr = (p.currentVRAMAddr &^ coarseYScrollMask) | (coarseY << coarseYScrollShift)
 	}
+}
+
+func (p *PPU) extractBgAttr(attribute byte) byte {
+	coarseX := p.currentVRAMAddr & coarseXScrollMask
+	coarseY := (p.currentVRAMAddr & coarseYScrollMask) >> coarseYScrollShift
+	atLoPos := (coarseX & 0x02) + ((coarseY & 0x02) << 1)
+	atHiPos := atLoPos + 1
+	attrLo := (attribute & (1 << atLoPos)) >> byte(atLoPos)
+	attrHi := (attribute & (1 << atHiPos)) >> byte(atHiPos)
+	return (attrHi<<1 | attrLo)
 }
 
 func (p *PPU) getColorIdxFromPalette(paletteRAMIdx byte) byte {
@@ -492,7 +499,11 @@ func (p *PPU) DrawNametable() {
 		p.VirtualDisplay[i] = p.getColorIdxFromPalette(paletteRAMIDx)
 
 		if i%8 == 7 {
-			p.incrementX()
+			if p.currentVRAMAddr&coarseXScrollMask == coarseXScrollMask {
+				p.currentVRAMAddr &^= coarseXScrollMask
+			} else {
+				p.currentVRAMAddr += 1
+			}
 		}
 
 		if i%visibleDotsMax == 255 {
@@ -502,4 +513,15 @@ func (p *PPU) DrawNametable() {
 
 	p.nTDataLatch = oldNtDataLatch
 	p.currentVRAMAddr = oldVramAddr
+}
+
+func extractNthBitAndRepeat(n, val byte) byte {
+	mask := byte(1) << n
+	nthBit := (val & mask) >> n
+
+	if nthBit == 0 {
+		return 0
+	} else {
+		return 0xFF
+	}
 }

@@ -330,7 +330,9 @@ func (p *PPU) outputPixel() {
 					p.sprite0Hit = true
 				}
 
-				if spritePaletteRAMIdx == 0 && isSpriteOpaque && priority == 0 {
+				isInFg := priority == 0
+				isInBg := priority == spritePritorityMask
+				if spritePaletteRAMIdx == 0 && isSpriteOpaque && (isInFg || (!isBgOpaque && isInBg)){
 					spritePaletteRAMIdx = spritePaletteMSB<<4 | attribute<<2 | tileHi<<1 | tileLo
 					paletteRAMIDx = spritePaletteMSB<<4 | attribute<<2 | tileHi<<1 | tileLo
 				}

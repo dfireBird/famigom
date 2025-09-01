@@ -12,7 +12,7 @@ const (
 	verticalFlipOAMMask   = 0x80
 )
 
-func (p *PPU) spriteEvaulvation() {
+func (p *PPU) spriteEvaluation() {
 	if 1 <= p.line && p.line <= visibleDotsMax {
 		if 1 <= p.dot && p.dot <= 64 {
 			if p.dot%2 == 0 {
@@ -29,7 +29,8 @@ func (p *PPU) spriteEvaulvation() {
 			}
 		} else if 65 <= p.dot && p.dot <= 256 {
 			yCoord := uint16(p.readOAMMemory(p.spriteIdx * 4))
-			if p.spriteIdx < 64 && yCoord <= p.line && p.line <= yCoord+7 { // we can check with current line num, since Y-coord is subtracted by 1
+			spriteHeight := getSpriteHeight(p.getSpriteSize())
+			if p.spriteIdx < 64 && yCoord <= p.line && p.line <= yCoord+spriteHeight { // we can check with current line num, since Y-coord is subtracted by 1
 				if p.secondaryOAMIdx <= 7 {
 					p.sprite0InNextLine = p.spriteIdx == 0
 
@@ -85,15 +86,32 @@ func (p *PPU) doSpriteFetch() {
 
 func (p *PPU) calcSpritePatternAddr(bitPlane, tileNo types.Word, yCoord byte, vertFlip bool) types.Word {
 	fineY := p.line - uint16(yCoord)
+	spriteHeight := getSpriteHeight(p.getSpriteSize())
 	if vertFlip {
-		fineY = 7 - fineY
+		fineY = spriteHeight - fineY
+	}
+
+	isNextTileIn8x16 := false
+	if fineY > 7 {
+		fineY %= 8
+		isNextTileIn8x16 = true
 	}
 
 	var patternTableHalf types.Word
 	if p.getSpriteSize() == Sprite8x8 {
 		patternTableHalf = p.getSpritePatternTableAddr()
 	} else {
-		patternTableHalf = 0x0
+		bit0 := tileNo & 1
+		if bit0 == 0 {
+			patternTableHalf = 0x0000
+		} else {
+			patternTableHalf = 0x1000
+			tileNo &^= 1
+		}
+	}
+
+	if isNextTileIn8x16 {
+		tileNo |= 1
 	}
 	return patternTableHalf | (tileNo << 4) | bitPlane | fineY
 }
@@ -117,4 +135,12 @@ func incrementSecondaryOAMIdx(idx byte) byte {
 		return idx
 	}
 	return idx + 1
+}
+
+func getSpriteHeight(size SpriteSize) types.Word {
+	if size == Sprite8x8 {
+		return 7
+	} else {
+		return 15
+	}
 }

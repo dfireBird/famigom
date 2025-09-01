@@ -208,11 +208,14 @@ func (p *PPU) Step() {
 				p.tileAttributeShiftRegisterLo |= types.Word(extractNthBitAndRepeat(0, p.aTDataLatch))
 				p.tileAttributeShiftRegisterHi |= types.Word(extractNthBitAndRepeat(1, p.aTDataLatch))
 			}
-			p.spriteEvaulvation()
+			p.spriteEvaluation()
 		}
 
 		if p.isRenderingEnabled() && (spriteDotLo <= p.dot && p.dot <= spirteDotHi) {
 			p.doSpriteFetch()
+			if p.line == preRenderScanLine {
+				p.spritePatternData[p.dot % 32] = 0xFF
+			}
 		}
 
 		if p.isRenderingEnabled() && (tilesForNextScanLineLo <= p.dot && p.dot <= tilesForNextScanLineHi) {
@@ -276,7 +279,6 @@ func (p *PPU) outputPixel() {
 
 		attrLo := (p.tileAttributeShiftRegisterLo & fineXBitSelect) >> shiftOfFineX
 		attrHi := (p.tileAttributeShiftRegisterHi & fineXBitSelect) >> shiftOfFineX
-		log.GetLoggerWithSpan("ppu").Debugf("Attribute: %d %d", attrHi, attrLo)
 
 		isBgOpaque = (tileHi<<1 | tileLo) != 0
 

@@ -3,6 +3,7 @@ package ppu
 import (
 	"github.com/dfirebird/famigom/bus"
 	"github.com/dfirebird/famigom/log"
+	"github.com/dfirebird/famigom/mapper"
 	"github.com/dfirebird/famigom/program"
 	"github.com/dfirebird/famigom/types"
 )
@@ -119,13 +120,16 @@ type PPU struct {
 	VirtualDisplay [totalDots]byte
 }
 
-func CreatePPU(nmiCallback *func(), mirroring program.NametableArrangement) PPU {
+func CreatePPU(nmiCallback *func(), mirroring program.NametableArrangement, mapper mapper.Mapper) PPU {
 	ppuBus := createPPUBus(mirroring)
 
-	return PPU{
+	ppu := PPU{
 		nmiCallback:  nmiCallback,
 		chrMemoryBus: &ppuBus,
 	}
+
+	ppu.chrMemoryBus.RegisterDevice(mapper)
+	return ppu
 }
 
 func createPPUBus(mirroring program.NametableArrangement) bus.PPUBus {
@@ -159,10 +163,6 @@ func (p *PPU) PowerUp() {
 	p.ppuData = 0
 
 	p.oddFrame = false
-}
-
-func (p *PPU) RegisterDevice(d bus.PPUBusDevice) {
-	p.chrMemoryBus.RegisterDevice(d)
 }
 
 func (p *PPU) Step() {

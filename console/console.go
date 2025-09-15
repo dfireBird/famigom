@@ -2,6 +2,7 @@ package console
 
 import (
 	"github.com/dfirebird/famigom/bus"
+	"github.com/dfirebird/famigom/controller"
 	"github.com/dfirebird/famigom/cpu"
 	"github.com/dfirebird/famigom/cpu/ram"
 	"github.com/dfirebird/famigom/mapper"
@@ -14,9 +15,21 @@ const (
 	CPU_CYCLE_DURATION_NS = 559
 )
 
+const (
+	CONSOLE_BUTTON_A      = 1 << iota
+	CONSOLE_BUTTON_B      = 1 << iota
+	CONSOLE_BUTTON_SELECT = 1 << iota
+	CONSOLE_BUTTON_START  = 1 << iota
+	CONSOLE_BUTTON_UP     = 1 << iota
+	CONSOLE_BUTTON_DOWN   = 1 << iota
+	CONSOLE_BUTTON_LEFT   = 1 << iota
+	CONSOLE_BUTTON_RIGHT  = 1 << iota
+)
+
 type Console struct {
-	cpu *cpu.CPU
-	ppu *ppu.PPU
+	cpu         *cpu.CPU
+	ppu         *ppu.PPU
+	controllers *controller.Controllers
 
 	mapper    *mapper.Mapper
 	mapperNum byte
@@ -49,11 +62,15 @@ func CreateConsole(romData *[]byte) (*Console, error) {
 	ppu := ppu.CreatePPU(&nmiCallback, program.NametableArrangement.GetMirroring(), mapper)
 	mainBus.RegisterDevice(&ppu)
 
+	controllers := controller.CreateControllers()
+	mainBus.RegisterDevice(controllers)
+
 	console := Console{
-		cpu:       &cpu,
-		ppu:       &ppu,
-		mapper:    &mapper,
-		mapperNum: program.Mapper,
+		cpu:         &cpu,
+		ppu:         &ppu,
+		controllers: controllers,
+		mapper:      &mapper,
+		mapperNum:   program.Mapper,
 	}
 
 	return &console, nil
@@ -72,8 +89,12 @@ func (c *Console) Step() {
 	c.ppu.Step()
 }
 
+func (c *Console) LoadControllerButtons(port1, port2 byte) {
+    c.controllers.LoadButtonData(port1, port2)
+}
+
 func (c *Console) GetPixelData() []byte {
-	pixels := make([]byte, 0, 256 * 240 * 4)
+	pixels := make([]byte, 0, 256*240*4)
 	for _, colorIdx := range c.ppu.VirtualDisplay {
 		color := palette.GetColor(colorIdx)
 		pixels = append(pixels, color.R, color.G, color.B, 0xFF) // Last byte is Alpha

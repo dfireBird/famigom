@@ -47,7 +47,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := sdl.Init(sdl.INIT_VIDEO); err != nil {
+	if err := sdl.Init(sdl.INIT_VIDEO | sdl.INIT_GAMEPAD); err != nil {
 		panic(err)
 	}
 
@@ -69,12 +69,25 @@ func main() {
 
 	cycleTimer := sdl.TicksNS()
 	elapsed := cycleTimer - cycleTimer
+	var player1, player2 byte
 	sdl.RunLoop(func() error {
 		var event sdl.Event
 		for sdl.PollEvent(&event) {
 			switch event.Type {
 			case sdl.EVENT_QUIT:
 				return sdl.EndLoop
+			case sdl.EVENT_GAMEPAD_ADDED:
+				_, err := event.GamepadDeviceEvent().Which.OpenGamepad()
+				if err != nil {
+					logger.Errorln(err)
+				}
+			case sdl.EVENT_GAMEPAD_REMOVED:
+				gamepad, err := event.GamepadDeviceEvent().Which.Gamepad()
+				if err == nil {
+					gamepad.Close()
+				} else {
+					logger.Errorln(err)
+				}
 			case sdl.EVENT_KEY_DOWN:
 				if event.KeyboardEvent().Scancode == sdl.SCANCODE_ESCAPE {
 					return sdl.EndLoop
@@ -82,6 +95,7 @@ func main() {
 					konsole.DrawNametable()
 				}
 			}
+			ConvertInputEventsForConsole(event, &player1, &player2)
 		}
 
 		now := sdl.TicksNS()
@@ -89,6 +103,7 @@ func main() {
 		cycleTimer = now
 
 		for elapsed > console.CPU_CYCLE_DURATION_NS {
+			konsole.LoadControllerButtons(player1, player2)
 			konsole.Step()
 
 			elapsed -= console.CPU_CYCLE_DURATION_NS
@@ -101,4 +116,46 @@ func main() {
 		renderer.Present()
 		return nil
 	})
+}
+
+func ConvertInputEventsForConsole(event sdl.Event, port1, port2 *byte) {
+	if event.Type == sdl.EVENT_GAMEPAD_BUTTON_DOWN || event.Type == sdl.EVENT_GAMEPAD_BUTTON_UP {
+		event := event.GamepadButtonEvent()
+		playerIdx := event.Which.GamepadPlayerIndex()
+
+		var currentPort *byte
+		if playerIdx == 1 {
+			currentPort = port2
+		} else {
+			currentPort = port1
+		}
+
+		button := sdl.GamepadButton(event.Button)
+		switch button {
+		case sdl.GAMEPAD_BUTTON_SOUTH, sdl.GAMEPAD_BUTTON_NORTH:
+			handleChangeWithEvent(currentPort, console.CONSOLE_BUTTON_A, event.Type)
+		case sdl.GAMEPAD_BUTTON_EAST, sdl.GAMEPAD_BUTTON_WEST:
+			handleChangeWithEvent(currentPort, console.CONSOLE_BUTTON_B, event.Type)
+		case sdl.GAMEPAD_BUTTON_BACK:
+			handleChangeWithEvent(currentPort, console.CONSOLE_BUTTON_SELECT, event.Type)
+		case sdl.GAMEPAD_BUTTON_START:
+			handleChangeWithEvent(currentPort, console.CONSOLE_BUTTON_START, event.Type)
+		case sdl.GAMEPAD_BUTTON_DPAD_UP:
+			handleChangeWithEvent(currentPort, console.CONSOLE_BUTTON_UP, event.Type)
+		case sdl.GAMEPAD_BUTTON_DPAD_DOWN:
+			handleChangeWithEvent(currentPort, console.CONSOLE_BUTTON_DOWN, event.Type)
+		case sdl.GAMEPAD_BUTTON_DPAD_LEFT:
+			handleChangeWithEvent(currentPort, console.CONSOLE_BUTTON_LEFT, event.Type)
+		case sdl.GAMEPAD_BUTTON_DPAD_RIGHT:
+			handleChangeWithEvent(currentPort, console.CONSOLE_BUTTON_RIGHT, event.Type)
+		}
+	}
+}
+
+func handleChangeWithEvent(port *byte, buttonValue byte, eventType sdl.EventType) {
+	if eventType == sdl.EVENT_GAMEPAD_BUTTON_DOWN {
+		*port |= buttonValue
+	} else {
+		*port &^= buttonValue
+	}
 }

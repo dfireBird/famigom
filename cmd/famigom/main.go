@@ -12,6 +12,8 @@ import (
 	"github.com/Zyko0/go-sdl3/sdl"
 )
 
+const PerFrameScreenTicks = 1000 / 60;
+
 func main() {
 	verbose := flag.Bool("v", false, "Enables verbose logging")
 	flag.Parse()
@@ -43,7 +45,7 @@ func main() {
 	defer binsdl.Load().Unload()
 	defer sdl.Quit()
 
-	if err := sdl.SetHint(sdl.HINT_RENDER_VSYNC, "1"); err != nil {
+	if err := sdl.SetHint(sdl.HINT_RENDER_VSYNC, "0"); err != nil {
 		panic(err)
 	}
 
@@ -69,9 +71,13 @@ func main() {
 
 	cycleTimer := sdl.TicksNS()
 	elapsed := cycleTimer - cycleTimer
+
 	var player1, player2 byte
+
 	sdl.RunLoop(func() error {
+		frameStart := sdl.Ticks()
 		var event sdl.Event
+
 		for sdl.PollEvent(&event) {
 			switch event.Type {
 			case sdl.EVENT_QUIT:
@@ -114,6 +120,11 @@ func main() {
 		nesScreenTex.Update(nil, pixels, 256*4)
 		renderer.RenderTexture(nesScreenTex, nil, nil)
 		renderer.Present()
+
+		deltaFrameTime := sdl.Ticks() - frameStart
+		for deltaFrameTime < PerFrameScreenTicks {
+			deltaFrameTime = sdl.Ticks() - frameStart
+		}
 		return nil
 	})
 }

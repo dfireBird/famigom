@@ -326,7 +326,6 @@ func (c *CPU) i_JAM() {
 	// FIXME: It should set a variable in CPU so that CPU runs but doesn't
 	// execute instructions only poll for hardware interupts
 	c.isJammed = true
-	panic("JAM instruction")
 }
 
 func (c *CPU) branch(offset byte) {

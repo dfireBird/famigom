@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 
 	"github.com/dfirebird/famigom/console"
 	"github.com/dfirebird/famigom/log"
@@ -20,6 +21,20 @@ func main() {
 
 	log.IsTrace = *verbose
 	logger := log.GetLoggerWithSpan("famigom")
+
+	if *profile {
+		f, err := os.Create("cpu.prof")
+		if err != nil {
+			logger.Fatal("Could not create CPU profile file: ", err)
+		}
+		defer f.Close()
+
+		if err := pprof.StartCPUProfile(f); err != nil {
+			logger.Fatal("Could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+
 
 	if len(flag.Args()) != 1 {
 		logger.Errorf("NES ROM file path is not passed as an argument")

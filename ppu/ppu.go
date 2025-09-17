@@ -166,7 +166,7 @@ func (p *PPU) PowerUp() {
 }
 
 func (p *PPU) Step() {
-	log.GetLoggerWithSpan("ppu").Debugf("(x, y): (%03d, %03d) v: 0x%04X t: 0x%04X PPUCTRL: 0x%04X PPUMASK: 0x%04X PPUSTAT: 0x%04X ND: 0x%02X AD: 0x%02X pl: 0x%04X ph: 0x%04X al: 0x%04X ah: 0x%04X",
+	log.TraceLog("PPU (x, y): (%03d, %03d) v: 0x%04X t: 0x%04X PPUCTRL: 0x%02X PPUMASK: 0x%02X PPUSTAT: 0x%02X ND: 0x%02X AD: 0x%02X pl: 0x%04X ph: 0x%04X al: 0x%04X ah: 0x%04X\n",
 		p.dot, p.line, p.currentVRAMAddr, p.tempVRAMAddr, p.ppuCtrl, p.ppuMask, p.getPPUStatus(),
 		p.nTDataLatch, p.aTDataLatch, p.tilePatternShiftRegisterLo, p.tilePatternShiftRegisterHi,
 		p.tileAttributeShiftRegisterLo, p.tileAttributeShiftRegisterHi,
@@ -308,8 +308,7 @@ func (p *PPU) outputPixel() {
 				tileLo := (*spritePtDataLo & bitSelect) >> shift
 				tileHi := (*spritePtDataHi & bitSelect) >> shift
 
-				log.GetLoggerWithSpan("ppu").Debugf("x: %d, tl: 0b%08b th: 0b%08b at: 0b%02b", xCoord, *spritePtDataLo, *spritePtDataHi, attribute)
-
+				log.TraceLog("PPU x: %d, tl: 0b%08b th: 0b%08b at: 0b%02b bg: %t sp: %t prid: 0x%02X\n", xCoord, *spritePtDataLo, *spritePtDataHi, attribute, isBgOpaque, (tileHi<<1 | tileLo) != 0, paletteRAMIDx)
 				*spritePtDataLo = (*spritePtDataLo << 1) | 1
 				*spritePtDataHi = (*spritePtDataHi << 1) | 1
 

@@ -37,7 +37,7 @@ func (p *PPU) spriteEvaluation() {
 					for i := range byte(4) {
 						p.secondaryOAM[p.secondaryOAMIdx*4+i] = p.readOAMMemory(p.spriteIdx*4 + i)
 					}
-					log.GetLoggerWithSpan("ppu").Debugf("Y: %d, tid: 0x%02X, attr: 0b%08b x: %d", p.secondaryOAM[p.secondaryOAMIdx*4+0], p.secondaryOAM[p.secondaryOAMIdx*4+1], p.secondaryOAM[p.secondaryOAMIdx*4+2], p.secondaryOAM[p.secondaryOAMIdx*4+3])
+					log.TraceLog("PPU Y: %d, tid: 0x%02X, attr: 0b%08b x: %d\n", p.secondaryOAM[p.secondaryOAMIdx*4+0], p.secondaryOAM[p.secondaryOAMIdx*4+1], p.secondaryOAM[p.secondaryOAMIdx*4+2], p.secondaryOAM[p.secondaryOAMIdx*4+3])
 				} else {
 					p.spriteOverflow = true
 				}

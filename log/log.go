@@ -1,31 +1,39 @@
 package log
 
 import (
+	"bufio"
+	"fmt"
+	"os"
+
 	"go.uber.org/zap"
 )
 
 var logger = zap.Must(zap.NewDevelopment()).Sugar()
-var discard = zap.NewNop().Sugar()
-var traceLogger = zap.Must(newTraceLogger()).Sugar()
-
 var IsTrace = false
 
-func GetLoggerWithSpan(span string) *zap.SugaredLogger {
-	if span == "cpu" || span == "ppu" {
-		if IsTrace {
-			return traceLogger
-		} else {
-			return discard
-		}
-	} else {
-		return logger
+func Logger() *zap.SugaredLogger {
+	return logger
+}
+
+var w *bufio.Writer
+
+func TraceLog(template string, args ...any) {
+	if IsTrace {
+		fmt.Fprintf(w, template, args...)
 	}
 }
 
-func newTraceLogger() (*zap.Logger, error) {
-	cfg := zap.NewDevelopmentConfig()
-	cfg.OutputPaths = []string{
-		"famigom.trace",
+func InitLogger(verbose bool) error {
+	IsTrace = verbose
+
+	f, err := os.Create("famigom.trace")
+	if err != nil {
+		return err
 	}
-	return cfg.Build()
+	w = bufio.NewWriterSize(f, 512*1024*1024)
+	return nil
+}
+
+func FlushLoggers() {
+	w.Flush()
 }

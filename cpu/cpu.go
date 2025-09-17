@@ -88,7 +88,7 @@ func (c *CPU) Step() {
 
 	c.pollInterrupts()
 	opcode := c.ReadMemory(c.PC)
-	log.GetLoggerWithSpan("cpu").Debugf("%04X  %02X  A:%02X X:%02X Y:%02X P:%02X SP:%02X \n", c.PC, opcode, c.A, c.X, c.Y, c.Flags, c.SP)
+	log.TraceLog("CPU %04X  %02X  A:%02X X:%02X Y:%02X P:%02X SP:%02X \n", c.PC, opcode, c.A, c.X, c.Y, c.Flags, c.SP)
 	c.PC++
 	switch opcode {
 	case 0x00:

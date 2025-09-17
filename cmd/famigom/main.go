@@ -13,15 +13,19 @@ import (
 	"github.com/Zyko0/go-sdl3/sdl"
 )
 
-const PerFrameScreenTicks = 1000 / 60;
+const PerFrameScreenTicks = 1000 / 60
 
 func main() {
 	verbose := flag.Bool("v", false, "Enables verbose logging")
+	profile := flag.Bool("p", false, "Enables profile logging")
 	flag.Parse()
 
-	log.IsTrace = *verbose
-	logger := log.GetLoggerWithSpan("famigom")
+	if err := log.InitLogger(*verbose); err != nil {
+		panic("Could not initialize loggers")
+	}
+	defer log.FlushLoggers()
 
+	logger := log.Logger()
 	if *profile {
 		f, err := os.Create("cpu.prof")
 		if err != nil {
@@ -34,7 +38,6 @@ func main() {
 		}
 		defer pprof.StopCPUProfile()
 	}
-
 
 	if len(flag.Args()) != 1 {
 		logger.Errorf("NES ROM file path is not passed as an argument")
@@ -83,6 +86,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	logger.Info("SDL Window Initialization complete")
+
 
 	cycleTimer := sdl.TicksNS()
 	elapsed := cycleTimer - cycleTimer

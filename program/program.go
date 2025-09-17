@@ -41,7 +41,7 @@ type Program struct {
 }
 
 func Parse(romData []byte) (*Program, error) {
-	logger := log.GetLoggerWithSpan("rom")
+	logger := log.Logger()
 	seekIdx := uint(0)
 
 	if nesHeader := romData[:4]; !bytes.Equal(nesHeader, NES_HEADER) {

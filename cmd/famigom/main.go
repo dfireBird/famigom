@@ -88,6 +88,8 @@ func main() {
 	}
 	logger.Info("SDL Window Initialization complete")
 
+	step := false
+	pause := false
 
 	cycleTimer := sdl.TicksNS()
 	elapsed := cycleTimer - cycleTimer
@@ -114,36 +116,73 @@ func main() {
 				} else {
 					logger.Errorln(err)
 				}
+			case sdl.EVENT_GAMEPAD_BUTTON_DOWN:
+				button := sdl.GamepadButton(event.GamepadButtonEvent().Button)
+				if button == sdl.GAMEPAD_BUTTON_RIGHT_SHOULDER {
+					pause = !pause
+					logger.Info("Pause: ", pause)
+				} else if button == sdl.GAMEPAD_BUTTON_LEFT_SHOULDER {
+					step = true
+				} else if button == sdl.GAMEPAD_BUTTON_RIGHT_STICK {
+					log.IsTrace = !log.IsTrace
+					logger.Info("Trace: ", log.IsTrace)
+				}
 			case sdl.EVENT_KEY_DOWN:
 				if event.KeyboardEvent().Scancode == sdl.SCANCODE_ESCAPE {
 					return sdl.EndLoop
-				} else if event.KeyboardEvent().Scancode == sdl.SCANCODE_Z {
+				} else if event.KeyboardEvent().Scancode == sdl.SCANCODE_1 {
 					konsole.DrawNametable()
+				} else if event.KeyboardEvent().Scancode == sdl.SCANCODE_2 {
+					pause = !pause
+					logger.Info("Pause: ", pause)
+				} else if event.KeyboardEvent().Scancode == sdl.SCANCODE_3 {
+					step = true
+				} else if event.KeyboardEvent().Scancode == sdl.SCANCODE_4 {
+					log.IsTrace = !log.IsTrace
+					logger.Info("Trace Enable: ", log.IsTrace)
 				}
 			}
 			ConvertInputEventsForConsole(event, &player1, &player2)
 		}
 
-		now := sdl.TicksNS()
-		elapsed += now - cycleTimer
-		cycleTimer = now
-
-		for elapsed > console.CPU_CYCLE_DURATION_NS {
-			konsole.LoadControllerButtons(player1, player2)
-			konsole.Step()
-
-			elapsed -= console.CPU_CYCLE_DURATION_NS
+		if pause && step {
+			for range 29780 {
+				konsole.LoadControllerButtons(0, 0)
+				konsole.Step()
+			}
+			step = false
 		}
 
+		if !pause {
+			now := sdl.TicksNS()
+			elapsed += now - cycleTimer
+			cycleTimer = now
+		} else {
+			elapsed = 0
+			cycleTimer = sdl.TicksNS()
+		}
+
+		if !pause {
+			for elapsed > console.CPU_CYCLE_DURATION_NS {
+				konsole.LoadControllerButtons(player1, player2)
+				konsole.Step()
+
+				elapsed -= console.CPU_CYCLE_DURATION_NS
+			}
+		}
+
+		renderer.Clear()
 		pixels := konsole.GetPixelData()
 
 		nesScreenTex.Update(nil, pixels, 256*4)
 		renderer.RenderTexture(nesScreenTex, nil, nil)
 		renderer.Present()
 
-		deltaFrameTime := sdl.Ticks() - frameStart
-		for deltaFrameTime < PerFrameScreenTicks {
-			deltaFrameTime = sdl.Ticks() - frameStart
+		if !pause {
+			deltaFrameTime := sdl.Ticks() - frameStart
+			for deltaFrameTime < PerFrameScreenTicks {
+				deltaFrameTime = sdl.Ticks() - frameStart
+			}
 		}
 		return nil
 	})

@@ -10,6 +10,8 @@ import (
 const (
 	horizontalFlipOAMMask = 0x40
 	verticalFlipOAMMask   = 0x80
+
+	internalUseSprite0Bit = 0x04
 )
 
 func (p *PPU) spriteEvaluation() {
@@ -32,10 +34,11 @@ func (p *PPU) spriteEvaluation() {
 			spriteHeight := getSpriteHeight(p.getSpriteSize())
 			if p.spriteIdx < 64 && yCoord <= p.line && p.line <= yCoord+spriteHeight { // we can check with current line num, since Y-coord is subtracted by 1
 				if p.secondaryOAMIdx <= 7 {
-					p.sprite0InNextLine = p.spriteIdx == 0
-
 					for i := range byte(4) {
 						p.secondaryOAM[p.secondaryOAMIdx*4+i] = p.readOAMMemory(p.spriteIdx*4 + i)
+					}
+					if p.spriteIdx == 0 {
+						p.secondaryOAM[p.secondaryOAMIdx*4+2] |= internalUseSprite0Bit
 					}
 					log.TraceLog("PPU Y: %d, tid: 0x%02X, attr: 0b%08b x: %d\n", p.secondaryOAM[p.secondaryOAMIdx*4+0], p.secondaryOAM[p.secondaryOAMIdx*4+1], p.secondaryOAM[p.secondaryOAMIdx*4+2], p.secondaryOAM[p.secondaryOAMIdx*4+3])
 				} else {

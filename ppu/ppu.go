@@ -115,7 +115,6 @@ type PPU struct {
 	secondaryOAMIdx   byte
 	spriteIdx         byte
 	spritePatternData [secondaryOAMSize]byte
-	sprite0InNextLine bool
 
 	VirtualDisplay [totalDots]byte
 }
@@ -314,9 +313,10 @@ func (p *PPU) outputPixel() {
 
 				isSpriteOpaque := (tileHi<<1 | tileLo) != 0
 
+				isSprite0 := p.spritePatternData[i*4+1] & internalUseSprite0Bit == internalUseSprite0Bit
 				isLeftClip := (p.isLeftClipBg() || p.isLeftClipSprite()) && (dotVal <= 7)
 				isRightEdge := p.dot >= 256
-				if !p.sprite0Hit && i == 0 && p.sprite0InNextLine && !isLeftClip && !isRightEdge && isBgOpaque && isSpriteOpaque {
+				if !p.sprite0Hit && isSprite0 && !isLeftClip && !isRightEdge && isBgOpaque && isSpriteOpaque {
 					p.sprite0Hit = true
 				}
 

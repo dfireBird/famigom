@@ -3,8 +3,10 @@ package program
 import (
 	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/dfirebird/famigom/log"
+	"github.com/klauspost/compress/zip"
 )
 
 type NametableArrangement int
@@ -27,6 +29,7 @@ const (
 var (
 	ErrInvalidNesRom      = fmt.Errorf("ROM file is invalid/corrupted")
 	ErrInsupportedVersion = fmt.Errorf("NES 2.0 ROM is not supported yet")
+	ErrNotSingleFileZip   = fmt.Errorf("input zip archive has more than one files")
 )
 
 type Program struct {
@@ -43,6 +46,13 @@ type Program struct {
 func Parse(romData []byte) (*Program, error) {
 	logger := log.Logger()
 	seekIdx := uint(0)
+
+	if unzippedData, err := unzipIfPossible(romData); err != nil {
+		logger.Infoln("Unzipping file met with an error:", err.Error())
+		logger.Infoln("Considering the input file as RAW NES file.")
+	} else {
+		romData = unzippedData
+	}
 
 	if nesHeader := romData[:4]; !bytes.Equal(nesHeader, NES_HEADER) {
 		return nil, ErrInvalidNesRom
@@ -62,9 +72,10 @@ func Parse(romData []byte) (*Program, error) {
 	// skipping bytes from 9 - 16
 	seekIdx += 8
 
-	if nes2FormatFlag := (flags7 & 0x0C) >> 2; nes2FormatFlag == 2 {
-		return nil, ErrInsupportedVersion
-	}
+	/* Temoprarily commenting it out, since without this error some ines 2.0 header ROMs do work correctly */
+	// if nes2FormatFlag := (flags7 & 0x0C) >> 2; nes2FormatFlag == 2 {
+	// 	return nil, ErrInsupportedVersion
+	// }
 
 	mapperLo := flags6 & 0xF0
 	mapperHi := flags7 & 0xF0
@@ -111,6 +122,31 @@ func Parse(romData []byte) (*Program, error) {
 	}
 
 	return &program, nil
+}
+
+func unzipIfPossible(romData []byte) ([]byte, error) {
+	reader := bytes.NewReader(romData)
+	zipReader, err := zip.NewReader(reader, int64(len(romData)))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(zipReader.File) != 1 {
+		return nil, ErrNotSingleFileZip
+	}
+
+	name := zipReader.File[0].FileInfo().Name()
+	f, err := zipReader.Open(name)
+	if err != nil {
+		return nil, err
+	}
+
+	unzipped, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return unzipped, nil
 }
 
 func (n NametableArrangement) GetMirroring() NametableArrangement {

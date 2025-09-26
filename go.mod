@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	github.com/Zyko0/go-sdl3 v0.0.0-20250824154507-e7e72933ea7e
+	github.com/klauspost/compress v1.18.0
 	go.uber.org/zap v1.27.0
 )
 

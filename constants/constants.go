@@ -10,4 +10,11 @@ const (
 
 	LowChrROMAddr  = 0x0000
 	HighChrROMAddr = 0x1FFF
+
+	Kib1  = 1024
+	Kib2  = Kib1 * 2
+	Kib4  = Kib2 * 2
+	Kib8  = Kib4 * 2
+	Kib16 = Kib8 * 2
+	Kib32 = Kib16 * 2
 )

@@ -8,11 +8,7 @@ import (
 const (
 	mapperNum = 0x00
 
-	prgRAMSize = 4096
-
-	kib8  = 8192
-	kib16 = kib8 * 2
-	kib32 = kib16 * 2
+	prgRAMSize = constants.Kib4
 )
 
 type MapperNROM struct {
@@ -21,22 +17,22 @@ type MapperNROM struct {
 
 	prgRAM [prgRAMSize]byte
 
-	chrRom [kib8]byte
+	chrRom [constants.Kib8]byte
 }
 
 func CreateMapperNRom(prgRom []byte, chrRom []byte) *MapperNROM {
-	isPrgRom32kib := len(prgRom) == kib32
+	isPrgRom32kib := len(prgRom) == constants.Kib32
 
-	var chr [kib8]byte
+	var chr [constants.Kib8]byte
 	if (len(chrRom) == 0) {
-		chr = [kib8]byte{} // CHR RAM
+		chr = [constants.Kib8]byte{} // CHR RAM
 	} else {
-		chr = [8192]byte(chrRom)
+		chr = [constants.Kib8]byte(chrRom)
 	}
 	mapper := MapperNROM{
 		prgRom:             prgRom,
 		isPrgRom32kib:      isPrgRom32kib,
-		prgRAM:             [4096]byte{},
+		prgRAM:             [prgRAMSize]byte{},
 		chrRom:             chr,
 	}
 
@@ -50,7 +46,7 @@ func (m *MapperNROM) ReadMemory(addr Word) (bool, byte) {
 	} else if constants.LowPrgROMAddr <= addr && addr <= constants.HighPrgROMAddr {
 		prgRomAddr := addr - constants.LowPrgROMAddr
 		if !m.isPrgRom32kib {
-			prgRomAddr = prgRomAddr % kib16
+			prgRomAddr = prgRomAddr % constants.Kib16
 		}
 
 		return true, m.prgRom[prgRomAddr]

@@ -8,35 +8,35 @@ import (
 const (
 	mapperNum = 0x02
 
-	kib   = 1024
-	kib8  = 8 * kib
-	kib16 = 16 * kib
-
 	fixedBankStart = 0xC000
 )
 
 type MapperUxROM struct {
+	maxBanks byte
+
 	prgROM []byte
-	chrROM [kib8]byte
+	chrROM [constants.Kib8]byte
 
 	bank      []byte
 	fixedBank []byte
 }
 
 func CreateMapperUxROM(prgROM, chrROM []byte) *MapperUxROM {
-	var chr [kib8]byte
+	var chr [constants.Kib8]byte
 	if len(chrROM) == 0 {
-		chr = [kib8]byte{} // CHR RAM
+		chr = [constants.Kib8]byte{} // CHR RAM
 	} else {
-		chr = [kib8]byte(chrROM)
+		chr = [constants.Kib8]byte(chrROM)
 	}
 
 	size := len(prgROM)
-	fixedBank := prgROM[size-kib16:]
+	fixedBank := prgROM[size-constants.Kib16:]
+	maxBanks := size / constants.Kib16
 	mapper := MapperUxROM{
+		maxBanks:  byte(maxBanks),
 		prgROM:    prgROM,
 		chrROM:    chr,
-		bank:      prgROM[:kib16],
+		bank:      prgROM[:constants.Kib16],
 		fixedBank: fixedBank,
 	}
 
@@ -58,9 +58,9 @@ func (m *MapperUxROM) ReadMemory(addr types.Word) (bool, byte) {
 
 func (m *MapperUxROM) WriteMemory(addr types.Word, value byte) {
 	if constants.LowPrgROMAddr <= addr && addr <= constants.HighPrgROMAddr {
-		bankSel := value & 0x0F
-		bankStartIdx := uint(bankSel) * kib16
-		bankEndIdx := bankStartIdx + kib16
+		bankSel := (value & 0x0F) % m.maxBanks
+		bankStartIdx := uint(bankSel) * constants.Kib16
+		bankEndIdx := bankStartIdx + constants.Kib16
 		m.bank = m.prgROM[bankStartIdx:bankEndIdx]
 	}
 }

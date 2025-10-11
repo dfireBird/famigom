@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dfirebird/famigom/bus"
+	"github.com/dfirebird/famigom/mapper/mapperaxrom"
 	"github.com/dfirebird/famigom/mapper/mappercnrom"
 	"github.com/dfirebird/famigom/mapper/mappernrom"
 	"github.com/dfirebird/famigom/mapper/mapperuxrom"
@@ -30,6 +31,8 @@ func GetMapper(program *program.Program) (Mapper, error) {
 		return mapperuxrom.CreateMapperUxROM(program.PrgRom, program.ChrRom), nil
 	case 0x03:
 		return mappercnrom.CreateMapperCNROM(program.PrgRom, program.ChrRom), nil
+	case 0x07:
+		return mapperaxrom.CreateMapperAxROM(program.PrgRom, program.ChrRom), nil
 	default:
 		return nil, ErrUnsupported(program.Mapper)
 	}

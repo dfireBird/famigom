@@ -1,6 +1,7 @@
 package ppu
 
 import (
+	"github.com/dfirebird/famigom/constants"
 	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/types"
 )
@@ -43,6 +44,10 @@ func (v *VRAM) getNTAddrWithMirroring(addr types.Word) types.Word {
 		return (addr - vramLoAddr) % verticalNametableMask
 	case nametable.Horizontal:
 		return (addr & 0x03FF) | ((addr & verticalNametableMask) >> 1)
+	case nametable.SingleScreenLo:
+		return (addr & 0x03FF)
+	case nametable.SingleScreenHi:
+		return (addr & 0x03FF) + constants.Kib1
 
 	default:
 		panic("Invalid Mirroing data")

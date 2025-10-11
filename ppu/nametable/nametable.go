@@ -7,7 +7,8 @@ type NametableMirroring int
 const (
 	Horizontal NametableMirroring = iota
 	Vertical
-	SingleScreen
+	SingleScreenLo
+	SingleScreenHi
 )
 
 func FromNametableArrangement(v program.NametableArrangement) NametableMirroring {

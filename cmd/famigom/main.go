@@ -109,6 +109,7 @@ func main() {
 				if err != nil {
 					logger.Errorln(err)
 				}
+				logger.Infof("Player %d controller connected", event.GamepadAxisEvent().Which.GamepadPlayerIndex()+1)
 			case sdl.EVENT_GAMEPAD_REMOVED:
 				gamepad, err := event.GamepadDeviceEvent().Which.Gamepad()
 				if err == nil {

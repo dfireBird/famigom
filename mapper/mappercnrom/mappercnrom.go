@@ -2,6 +2,7 @@ package mappercnrom
 
 import (
 	"github.com/dfirebird/famigom/constants"
+	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/types"
 )
 
@@ -73,3 +74,5 @@ func (m *MapperCNROM) WriteCHRMemory(addr types.Word, value byte) {
 func (m *MapperCNROM) GetMapperNum() byte {
 	return mapperNum
 }
+
+func (m *MapperCNROM) SetMirroringUpdateCallback(func(nametable.NametableMirroring)) {}

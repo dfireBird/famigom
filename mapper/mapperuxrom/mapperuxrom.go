@@ -2,6 +2,7 @@ package mapperuxrom
 
 import (
 	"github.com/dfirebird/famigom/constants"
+	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/types"
 )
 
@@ -81,3 +82,5 @@ func (m *MapperUxROM) WriteCHRMemory(addr types.Word, value byte) {
 func (m *MapperUxROM) GetMapperNum() byte {
 	return mapperNum
 }
+
+func (m *MapperUxROM) SetMirroringUpdateCallback(func(nametable.NametableMirroring)) {}

@@ -8,6 +8,7 @@ import (
 	"github.com/dfirebird/famigom/mapper"
 	"github.com/dfirebird/famigom/palette"
 	"github.com/dfirebird/famigom/ppu"
+	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/program"
 )
 
@@ -59,8 +60,9 @@ func CreateConsole(romData *[]byte) (*Console, error) {
 	mainBus.RegisterDevice(dmaDevice)
 
 	nmiCallback := cpu.NMI
-	ppu := ppu.CreatePPU(&nmiCallback, program.NametableArrangement.GetMirroring(), mapper)
+	ppu := ppu.CreatePPU(&nmiCallback, nametable.FromNametableArrangement(program.NametableArrangement), mapper)
 	mainBus.RegisterDevice(&ppu)
+	mapper.SetMirroringUpdateCallback(ppu.UpdateMirroringCallback)
 
 	controllers := controller.CreateControllers()
 	mainBus.RegisterDevice(controllers)
@@ -90,7 +92,7 @@ func (c *Console) Step() {
 }
 
 func (c *Console) LoadControllerButtons(port1, port2 byte) {
-    c.controllers.LoadButtonData(port1, port2)
+	c.controllers.LoadButtonData(port1, port2)
 }
 
 func (c *Console) GetPixelData() []byte {

@@ -2,6 +2,7 @@ package mappernrom
 
 import (
 	"github.com/dfirebird/famigom/constants"
+	"github.com/dfirebird/famigom/ppu/nametable"
 	. "github.com/dfirebird/famigom/types"
 )
 
@@ -24,16 +25,16 @@ func CreateMapperNRom(prgRom []byte, chrRom []byte) *MapperNROM {
 	isPrgRom32kib := len(prgRom) == constants.Kib32
 
 	var chr [constants.Kib8]byte
-	if (len(chrRom) == 0) {
+	if len(chrRom) == 0 {
 		chr = [constants.Kib8]byte{} // CHR RAM
 	} else {
 		chr = [constants.Kib8]byte(chrRom)
 	}
 	mapper := MapperNROM{
-		prgRom:             prgRom,
-		isPrgRom32kib:      isPrgRom32kib,
-		prgRAM:             [prgRAMSize]byte{},
-		chrRom:             chr,
+		prgRom:        prgRom,
+		isPrgRom32kib: isPrgRom32kib,
+		prgRAM:        [prgRAMSize]byte{},
+		chrRom:        chr,
 	}
 
 	return &mapper
@@ -78,3 +79,5 @@ func (m *MapperNROM) WriteCHRMemory(addr Word, value byte) {
 func (m *MapperNROM) GetMapperNum() byte {
 	return mapperNum
 }
+
+func (m *MapperNROM) SetMirroringUpdateCallback(func(nametable.NametableMirroring)) {}

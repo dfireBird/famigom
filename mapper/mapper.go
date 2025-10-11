@@ -7,11 +7,13 @@ import (
 	"github.com/dfirebird/famigom/mapper/mappercnrom"
 	"github.com/dfirebird/famigom/mapper/mappernrom"
 	"github.com/dfirebird/famigom/mapper/mapperuxrom"
+	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/program"
 )
 
 type Mapper interface {
 	GetMapperNum() byte
+	SetMirroringUpdateCallback(func(nametable.NametableMirroring))
 	bus.MainBusDevice
 	bus.PPUBusDevice
 }

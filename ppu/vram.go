@@ -1,7 +1,7 @@
 package ppu
 
 import (
-	"github.com/dfirebird/famigom/program"
+	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/types"
 )
 
@@ -17,7 +17,7 @@ const (
 )
 
 type VRAM struct {
-	mirroring program.NametableArrangement
+	mirroring nametable.NametableMirroring
 	data      [maxVRAMSize]byte
 }
 
@@ -39,13 +39,19 @@ func (v *VRAM) WriteCHRMemory(addr types.Word, value byte) {
 
 func (v *VRAM) getNTAddrWithMirroring(addr types.Word) types.Word {
 	switch v.mirroring {
-	case program.Vertical:
+	case nametable.Vertical:
 		return (addr - vramLoAddr) % verticalNametableMask
-	case program.Horizontal:
+	case nametable.Horizontal:
 		return (addr & 0x03FF) | ((addr & verticalNametableMask) >> 1)
 
 	default:
 		panic("Invalid Mirroing data")
+	}
+}
+
+func (v *VRAM) UpdateMirroringCallback() func(nametable.NametableMirroring) {
+	return func(m nametable.NametableMirroring) {
+		v.mirroring = m
 	}
 }
 

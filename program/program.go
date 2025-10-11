@@ -88,7 +88,7 @@ func Parse(romData []byte) (*Program, error) {
 	logger.Infof("PRG ROM Bank Size %d", PrgRomBankSize)
 	logger.Infof("CHR ROM Bank Size %d", ChrRomBankSize)
 	logger.Infof("Mapper #%d", Mapper)
-	logger.Infof("Name Table Mirroring %v", nametableArrangement.GetMirroring())
+	logger.Infof("Name Table Mirroring %v", nametableArrangement.getMirroring())
 
 	isTrainerPresent := (flags6 & 0x04) == 0x04
 	if isTrainerPresent {
@@ -149,7 +149,7 @@ func unzipIfPossible(romData []byte) ([]byte, error) {
 	return unzipped, nil
 }
 
-func (n NametableArrangement) GetMirroring() NametableArrangement {
+func (n NametableArrangement) getMirroring() NametableArrangement {
 	if n == Horizontal {
 		return Vertical
 	} else {

@@ -209,12 +209,12 @@ func (p *PPU) isGreyscale() bool {
 }
 
 func (p *PPU) isLeftClipBg() bool {
-    const mask byte = 0x02
+	const mask byte = 0x02
 	return p.ppuMask&mask == mask
 }
 
 func (p *PPU) isLeftClipSprite() bool {
-    const mask byte = 0x04
+	const mask byte = 0x04
 	return p.ppuMask&mask == mask
 }
 

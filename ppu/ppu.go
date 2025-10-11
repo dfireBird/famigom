@@ -4,7 +4,7 @@ import (
 	"github.com/dfirebird/famigom/bus"
 	"github.com/dfirebird/famigom/log"
 	"github.com/dfirebird/famigom/mapper"
-	"github.com/dfirebird/famigom/program"
+	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/types"
 )
 
@@ -116,22 +116,24 @@ type PPU struct {
 	spriteIdx         byte
 	spritePatternData [secondaryOAMSize]byte
 
-	VirtualDisplay [totalDots]byte
+	VirtualDisplay          [totalDots]byte
+	UpdateMirroringCallback func(nametable.NametableMirroring)
 }
 
-func CreatePPU(nmiCallback *func(), mirroring program.NametableArrangement, mapper mapper.Mapper) PPU {
-	ppuBus := createPPUBus(mirroring)
+func CreatePPU(nmiCallback *func(), mirroring nametable.NametableMirroring, mapper mapper.Mapper) PPU {
+	ppuBus, UpdateMirroringCallback := createPPUBus(mirroring)
 
 	ppu := PPU{
-		nmiCallback:  nmiCallback,
-		chrMemoryBus: &ppuBus,
+		nmiCallback:             nmiCallback,
+		chrMemoryBus:            &ppuBus,
+		UpdateMirroringCallback: UpdateMirroringCallback,
 	}
 
 	ppu.chrMemoryBus.RegisterDevice(mapper)
 	return ppu
 }
 
-func createPPUBus(mirroring program.NametableArrangement) bus.PPUBus {
+func createPPUBus(mirroring nametable.NametableMirroring) (bus.PPUBus, func(nametable.NametableMirroring)) {
 	ppuBus := bus.NewPPUBus()
 
 	vRAM := VRAM{
@@ -145,7 +147,7 @@ func createPPUBus(mirroring program.NametableArrangement) bus.PPUBus {
 
 	ppuBus.RegisterDevice(&vRAM).RegisterDevice(&paletteRAM)
 
-	return ppuBus
+	return ppuBus, vRAM.UpdateMirroringCallback()
 }
 
 func (p *PPU) PowerUp() {
@@ -213,7 +215,7 @@ func (p *PPU) Step() {
 		if p.isRenderingEnabled() && (spriteDotLo <= p.dot && p.dot <= spirteDotHi) {
 			p.doSpriteFetch()
 			if p.line == preRenderScanLine {
-				p.spritePatternData[p.dot % 32] = 0xFF
+				p.spritePatternData[p.dot%32] = 0xFF
 			}
 		}
 
@@ -307,13 +309,13 @@ func (p *PPU) outputPixel() {
 				tileLo := (*spritePtDataLo & bitSelect) >> shift
 				tileHi := (*spritePtDataHi & bitSelect) >> shift
 
-				log.TraceLog("PPU x: %d, tl: 0b%08b th: 0b%08b at: 0b%02b bg: %t sp: %t prid: 0x%02X\n", xCoord, *spritePtDataLo, *spritePtDataHi, attribute, isBgOpaque, (tileHi<<1 | tileLo) != 0, paletteRAMIDx)
+				log.TraceLog("PPU x: %d, tl: 0b%08b th: 0b%08b at: 0b%02b bg: %t sp: %t prid: 0x%02X\n", xCoord, *spritePtDataLo, *spritePtDataHi, attribute, isBgOpaque, (tileHi<<1|tileLo) != 0, paletteRAMIDx)
 				*spritePtDataLo = (*spritePtDataLo << 1) | 1
 				*spritePtDataHi = (*spritePtDataHi << 1) | 1
 
 				isSpriteOpaque := (tileHi<<1 | tileLo) != 0
 
-				isSprite0 := p.spritePatternData[i*4+1] & internalUseSprite0Bit == internalUseSprite0Bit
+				isSprite0 := p.spritePatternData[i*4+1]&internalUseSprite0Bit == internalUseSprite0Bit
 				isLeftClip := (p.isLeftClipBg() || p.isLeftClipSprite()) && (dotVal <= 7)
 				isRightEdge := p.dot >= 256
 				if !p.sprite0Hit && isSprite0 && !isLeftClip && !isRightEdge && isBgOpaque && isSpriteOpaque {
@@ -322,7 +324,7 @@ func (p *PPU) outputPixel() {
 
 				isInFg := priority == 0
 				isInBg := priority == spritePritorityMask
-				if spritePaletteRAMIdx == 0 && isSpriteOpaque && (isInFg || (!isBgOpaque && isInBg)){
+				if spritePaletteRAMIdx == 0 && isSpriteOpaque && (isInFg || (!isBgOpaque && isInBg)) {
 					spritePaletteRAMIdx = spritePaletteMSB<<4 | attribute<<2 | tileHi<<1 | tileLo
 					paletteRAMIDx = spritePaletteMSB<<4 | attribute<<2 | tileHi<<1 | tileLo
 				}

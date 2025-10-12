@@ -2,6 +2,7 @@ package mapperaxrom
 
 import (
 	"github.com/dfirebird/famigom/constants"
+	"github.com/dfirebird/famigom/mapper/mapperlib"
 	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/types"
 )
@@ -37,7 +38,7 @@ func CreateMapperAxROM(prgROM, chrROM []byte) *MapperAxROM {
 }
 
 func (m *MapperAxROM) ReadMemory(addr types.Word) (bool, byte) {
-	if constants.LowPrgROMAddr <= addr && addr <= constants.HighPrgROMAddr {
+	if mapperlib.IsPRGROMAddr(addr) {
 		idx := addr - constants.LowPrgROMAddr
 		return true, m.currentBank[idx]
 	}
@@ -45,7 +46,7 @@ func (m *MapperAxROM) ReadMemory(addr types.Word) (bool, byte) {
 }
 
 func (m *MapperAxROM) WriteMemory(addr types.Word, value byte) {
-	if constants.LowPrgROMAddr <= addr && addr <= constants.HighPrgROMAddr {
+	if mapperlib.IsPRGROMAddr(addr) {
 		bankSel := (value & 0x07) % m.maxBanks
 		bankStartIdx := uint(bankSel) * constants.Kib32
 		bankEndIdx := bankStartIdx + constants.Kib32
@@ -66,16 +67,11 @@ func (m *MapperAxROM) WriteMemory(addr types.Word, value byte) {
 }
 
 func (m *MapperAxROM) ReadCHRMemory(addr types.Word) (bool, byte) {
-	if constants.LowChrROMAddr <= addr && addr <= constants.HighChrROMAddr {
-		return true, m.chrROM[addr]
-	}
-	return false, 0
+	return mapperlib.GenericCHRRead(m.chrROM, addr)
 }
 
 func (m *MapperAxROM) WriteCHRMemory(addr types.Word, value byte) {
-	if constants.LowChrROMAddr <= addr && addr <= constants.HighChrROMAddr {
-		m.chrROM[addr] = value
-	}
+	mapperlib.GenericCHRWrite(m.chrROM, addr, value)
 }
 
 func (m *MapperAxROM) GetMapperNum() byte {

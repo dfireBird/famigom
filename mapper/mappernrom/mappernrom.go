@@ -65,11 +65,11 @@ func (m *MapperNROM) WriteMemory(addr Word, value byte) {
 }
 
 func (m *MapperNROM) ReadCHRMemory(addr Word) (bool, byte) {
-	return mapperlib.GenericCHRRead(m.chrRom, addr)
+	return mapperlib.GenericCHRRead(&m.chrRom, addr)
 }
 
 func (m *MapperNROM) WriteCHRMemory(addr Word, value byte) {
-	mapperlib.GenericCHRWrite(m.chrRom, addr, value)
+	mapperlib.GenericCHRWrite(&m.chrRom, addr, value)
 }
 
 func (m *MapperNROM) GetMapperNum() byte {

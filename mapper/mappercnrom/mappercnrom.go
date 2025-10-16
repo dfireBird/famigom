@@ -60,11 +60,13 @@ func (m *MapperCNROM) WriteMemory(addr types.Word, value byte) {
 }
 
 func (m *MapperCNROM) ReadCHRMemory(addr types.Word) (bool, byte) {
-	return mapperlib.GenericCHRRead([8192]byte(m.chrBank), addr)
+	chrBank := [constants.Kib8]byte(m.chrBank)
+	return mapperlib.GenericCHRRead(&chrBank, addr)
 }
 
 func (m *MapperCNROM) WriteCHRMemory(addr types.Word, value byte) {
-	mapperlib.GenericCHRWrite([8192]byte(m.chrBank), addr, value)
+	chrBank := [constants.Kib8]byte(m.chrBank)
+	mapperlib.GenericCHRWrite(&chrBank, addr, value)
 }
 
 func (m *MapperCNROM) GetMapperNum() byte {

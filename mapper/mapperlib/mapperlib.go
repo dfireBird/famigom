@@ -25,14 +25,14 @@ func IsCHRROMAddr(addr types.Word) bool {
 		return constants.LowChrROMAddr <= addr && addr <= constants.HighChrROMAddr
 }
 
-func GenericCHRRead(chrBank [constants.Kib8]byte, addr types.Word) (bool, byte) {
+func GenericCHRRead(chrBank *[constants.Kib8]byte, addr types.Word) (bool, byte) {
 		if IsCHRROMAddr(addr) {
 				return true, chrBank[addr]
 		}
 		return false, 0
 }
 
-func GenericCHRWrite(chrBank [constants.Kib8]byte, addr types.Word, value byte) {
+func GenericCHRWrite(chrBank *[constants.Kib8]byte, addr types.Word, value byte) {
 		if IsCHRROMAddr(addr) {
 				chrBank[addr] = value
 		}

@@ -77,3 +77,7 @@ func (m *MapperNROM) GetMapperNum() byte {
 }
 
 func (m *MapperNROM) SetMirroringUpdateCallback(func(nametable.NametableMirroring)) {}
+
+func (m *MapperNROM) CPUStep() {}
+
+func (m *MapperNROM) PPUStep() {}

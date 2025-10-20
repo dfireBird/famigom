@@ -85,10 +85,16 @@ func (c *Console) PowerUp() {
 
 func (c *Console) Step() {
 	c.cpu.Step()
+	(*c.mapper).CPUStep()
 
 	c.ppu.Step()
+	(*c.mapper).PPUStep()
+
 	c.ppu.Step()
+	(*c.mapper).PPUStep()
+
 	c.ppu.Step()
+	(*c.mapper).PPUStep()
 }
 
 func (c *Console) LoadControllerButtons(port1, port2 byte) {

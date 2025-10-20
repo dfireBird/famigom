@@ -81,3 +81,6 @@ func (m *MapperAxROM) GetMapperNum() byte {
 func (m *MapperAxROM) SetMirroringUpdateCallback(callback func(nametable.NametableMirroring)) {
 	m.updateMirroringCallback = &callback
 }
+
+func (m *MapperAxROM) CPUStep() {}
+func (m *MapperAxROM) PPUStep() {}

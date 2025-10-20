@@ -39,7 +39,7 @@ func GenericCHRWrite(chrBank *[constants.Kib8]byte, addr types.Word, value byte)
 }
 
 func CalculateBankStartEnd(bankNum, maxBanks byte, size uint) (uint, uint) {
-	bankSel := bankNum % maxBanks
+	bankSel := bankNum & (maxBanks - 1)
 	bankStartIdx := uint(bankSel) * size
 	bankEndIdx := bankStartIdx + size
 

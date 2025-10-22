@@ -10,6 +10,7 @@ import (
 	"github.com/dfirebird/famigom/ppu"
 	"github.com/dfirebird/famigom/ppu/nametable"
 	"github.com/dfirebird/famigom/program"
+	"github.com/dfirebird/famigom/types"
 )
 
 const (
@@ -33,7 +34,7 @@ type Console struct {
 	controllers *controller.Controllers
 
 	mapper    *mapper.Mapper
-	mapperNum byte
+	mapperNum types.Word
 }
 
 func CreateConsole(romData *[]byte) (*Console, error) {

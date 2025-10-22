@@ -4,6 +4,7 @@ import (
 	"github.com/dfirebird/famigom/constants"
 	"github.com/dfirebird/famigom/mapper/mapperlib"
 	"github.com/dfirebird/famigom/ppu/nametable"
+	"github.com/dfirebird/famigom/program"
 	"github.com/dfirebird/famigom/types"
 )
 
@@ -46,8 +47,9 @@ type MapperMMC1 struct {
 	chrROM []byte
 	prgRAM []byte
 
-	prgBanks byte
-	chrBanks byte
+	prgRAMSize types.Word
+	prgBanks   types.Word
+	chrBanks   types.Word
 
 	writeCounter      uint
 	interfaceRegister mapperShiftRegister
@@ -69,23 +71,41 @@ type MapperMMC1 struct {
 	updateMirroringCallback *func(nametable.NametableMirroring)
 }
 
-func CreateMapperMMC1(prgROM, chrROM []byte, prgBanks, chrBanks byte) *MapperMMC1 {
+func CreateMapperMMC1(program *program.Program) *MapperMMC1 {
 	var chr []byte
-	if len(chrROM) == 0 {
-		chrRAM := [constants.Kib8]byte{}
-		chr = chrRAM[:]
-		chrBanks = 2
+	prgBanks := program.PrgRomBankSize
+	chrBanks := program.ChrRomBankSize
+	prgRAMSize := types.Word(constants.Kib8)
+
+	if program.IsINES2 {
+		chr = program.ChrRom
+		if program.ChrRAMSize > 0 {
+			chrRAM := [constants.Kib8]byte{}
+			chr = chrRAM[:]
+			chrBanks = 2
+		}
+
+		if program.PrgRAMSize > 0 {
+			prgRAMSize = program.PrgRAMSize
+		}
 	} else {
-		chr = chrROM
-		chrBanks = chrBanks * 2
+		if chrBanks == 0 {
+			chrRAM := [constants.Kib8]byte{}
+			chr = chrRAM[:]
+			chrBanks = 2
+		} else {
+			chr = program.ChrRom
+			chrBanks = chrBanks * 2
+		}
 	}
 
-	prgRAM := [constants.Kib8]byte{}
+	prgRAM := make([]byte, prgRAMSize)
 	interfaceRegister := mapperShiftRegister{}
 	mapper := MapperMMC1{
-		prgROM:                  prgROM,
+		prgROM:                  program.PrgRom,
 		chrROM:                  chr,
 		prgRAM:                  prgRAM[:],
+		prgRAMSize:              prgRAMSize,
 		prgBanks:                prgBanks,
 		chrBanks:                chrBanks,
 		chrBank0Num:             0,
@@ -108,7 +128,7 @@ func CreateMapperMMC1(prgROM, chrROM []byte, prgBanks, chrBanks byte) *MapperMMC
 func (m *MapperMMC1) ReadMemory(addr types.Word) (bool, byte) {
 	if mapperlib.IsPRGRAMAddr(addr) {
 		idx := mapperlib.CalculatePRGRAMAddr(addr)
-		return true, m.prgRAMBank[idx]
+		return true, m.prgRAMBank[idx%m.prgRAMSize]
 	}
 	if mapperlib.IsPRGROMAddr(addr) {
 		idx := mapperlib.CalculatePRGROMAddr(addr)
@@ -125,7 +145,7 @@ func (m *MapperMMC1) ReadMemory(addr types.Word) (bool, byte) {
 func (m *MapperMMC1) WriteMemory(addr types.Word, value byte) {
 	if mapperlib.IsPRGRAMAddr(addr) {
 		idx := mapperlib.CalculatePRGRAMAddr(addr)
-		m.prgRAMBank[idx] = value
+		m.prgRAMBank[idx%m.prgRAMSize] = value
 	}
 	if mapperlib.IsPRGROMAddr(addr) {
 		if value&clearBitMask == 0 {

@@ -2,8 +2,10 @@ package mappernrom
 
 import (
 	"github.com/dfirebird/famigom/constants"
+	"github.com/dfirebird/famigom/log"
 	"github.com/dfirebird/famigom/mapper/mapperlib"
 	"github.com/dfirebird/famigom/ppu/nametable"
+	"github.com/dfirebird/famigom/program"
 	. "github.com/dfirebird/famigom/types"
 )
 
@@ -11,6 +13,10 @@ const (
 	mapperNum = 0x00
 
 	prgRAMSize = constants.Kib4
+)
+
+var (
+	WarnRequirePRGRAM = "NROM requires PRG RAM. iNES header field for PRG RAM is set 0. Assuming 4KiB of PRG RAM."
 )
 
 type MapperNROM struct {
@@ -22,17 +28,32 @@ type MapperNROM struct {
 	chrRom [constants.Kib8]byte
 }
 
-func CreateMapperNRom(prgRom []byte, chrRom []byte) *MapperNROM {
-	isPrgRom32kib := len(prgRom) == constants.Kib32
-
+func CreateMapperNRom(program *program.Program) *MapperNROM {
 	var chr [constants.Kib8]byte
-	if len(chrRom) == 0 {
-		chr = [constants.Kib8]byte{} // CHR RAM
+
+	// a prg bank has 16Kib => bank size of 2 == 32 kib
+	isPrgRom32kib := program.PrgRomBankSize == 2
+
+	if program.IsINES2 {
+		// should and will panic if chr ram size is 0 and chr rom length is also 0
+		chr = [constants.Kib8]byte(program.ChrRom)
+		if program.ChrRAMSize > 0 {
+			chr = [constants.Kib8]byte{}
+		}
+
+		if program.PrgRAMSize > 0 {
+			log.Logger().Warnln(WarnRequirePRGRAM)
+		}
 	} else {
-		chr = [constants.Kib8]byte(chrRom)
+		if program.ChrRomBankSize == 0 {
+			chr = [constants.Kib8]byte{} // CHR RAM
+		} else {
+			chr = [constants.Kib8]byte(program.ChrRom)
+		}
 	}
+
 	mapper := MapperNROM{
-		prgRom:        prgRom,
+		prgRom:        program.PrgRom,
 		isPrgRom32kib: isPrgRom32kib,
 		prgRAM:        [prgRAMSize]byte{},
 		chrRom:        chr,
@@ -43,10 +64,10 @@ func CreateMapperNRom(prgRom []byte, chrRom []byte) *MapperNROM {
 
 func (m *MapperNROM) ReadMemory(addr Word) (bool, byte) {
 	if mapperlib.IsPRGRAMAddr(addr) {
-		prgRAMAddr := addr - constants.LowPrgRAMAddr
+		prgRAMAddr := mapperlib.CalculatePRGRAMAddr(addr)
 		return true, m.prgRAM[prgRAMAddr]
 	} else if mapperlib.IsPRGROMAddr(addr) {
-		prgRomAddr := addr - constants.LowPrgROMAddr
+		prgRomAddr := mapperlib.CalculatePRGROMAddr(addr)
 		if !m.isPrgRom32kib {
 			prgRomAddr = prgRomAddr % constants.Kib16
 		}
@@ -59,7 +80,7 @@ func (m *MapperNROM) ReadMemory(addr Word) (bool, byte) {
 
 func (m *MapperNROM) WriteMemory(addr Word, value byte) {
 	if mapperlib.IsPRGRAMAddr(addr) {
-		prgRAMAddr := addr - constants.LowPrgRAMAddr
+		prgRAMAddr := mapperlib.CalculatePRGRAMAddr(addr)
 		m.prgRAM[prgRAMAddr] = value
 	}
 }

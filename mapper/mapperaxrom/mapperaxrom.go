@@ -2,8 +2,10 @@ package mapperaxrom
 
 import (
 	"github.com/dfirebird/famigom/constants"
+	"github.com/dfirebird/famigom/log"
 	"github.com/dfirebird/famigom/mapper/mapperlib"
 	"github.com/dfirebird/famigom/ppu/nametable"
+	"github.com/dfirebird/famigom/program"
 	"github.com/dfirebird/famigom/types"
 )
 
@@ -15,24 +17,36 @@ type MapperAxROM struct {
 	prgROM []byte
 	chrROM [constants.Kib8]byte
 
-	maxBanks                byte
+	maxBanks                types.Word
 	currentBank             []byte
 	updateMirroringCallback *func(nametable.NametableMirroring)
 }
 
-func CreateMapperAxROM(prgROM, chrROM []byte) *MapperAxROM {
+func CreateMapperAxROM(program *program.Program) *MapperAxROM {
 	var chr [constants.Kib8]byte
-	if len(chrROM) == 0 {
-		chr = [constants.Kib8]byte{} // CHR RAM
+
+	if program.IsINES2 {
+		chr = [constants.Kib8]byte(program.ChrRom)
+		if program.ChrRAMSize > 0 {
+			chr = [constants.Kib8]byte{}
+		}
+
+		if program.PrgRAMSize > 0 {
+			log.Logger().Warnln("Mapper AxROM does not support PRG RAM ignoring iNES 2.0 PRG RAM field value.")
+		}
 	} else {
-		chr = [constants.Kib8]byte(chrROM)
+		if program.ChrRomBankSize == 0 {
+			chr = [constants.Kib8]byte{} // CHR RAM
+		} else {
+			chr = [constants.Kib8]byte(program.ChrRom)
+		}
 	}
 
 	return &MapperAxROM{
-		prgROM:                  prgROM,
+		prgROM:                  program.PrgRom,
 		chrROM:                  chr,
-		maxBanks:                byte(len(prgROM) / constants.Kib32),
-		currentBank:             prgROM[:constants.Kib32],
+		maxBanks:                program.PrgRomBankSize,
+		currentBank:             program.PrgRom[:constants.Kib32],
 		updateMirroringCallback: nil,
 	}
 }
@@ -47,7 +61,7 @@ func (m *MapperAxROM) ReadMemory(addr types.Word) (bool, byte) {
 
 func (m *MapperAxROM) WriteMemory(addr types.Word, value byte) {
 	if mapperlib.IsPRGROMAddr(addr) {
-		bankSel := (value & 0x07) % m.maxBanks
+		bankSel := types.Word(value&0x07) % m.maxBanks
 		bankStartIdx := uint(bankSel) * constants.Kib32
 		bankEndIdx := bankStartIdx + constants.Kib32
 		m.currentBank = m.prgROM[bankStartIdx:bankEndIdx]

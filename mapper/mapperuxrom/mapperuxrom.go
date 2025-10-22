@@ -4,6 +4,7 @@ import (
 	"github.com/dfirebird/famigom/constants"
 	"github.com/dfirebird/famigom/mapper/mapperlib"
 	"github.com/dfirebird/famigom/ppu/nametable"
+	"github.com/dfirebird/famigom/program"
 	"github.com/dfirebird/famigom/types"
 )
 
@@ -14,56 +15,90 @@ const (
 )
 
 type MapperUxROM struct {
-	maxBanks byte
+	maxBanks types.Word
 
 	prgROM []byte
 	chrROM [constants.Kib8]byte
 
-	bank      []byte
-	fixedBank []byte
+	isPRGRAM   bool
+	prgRAMSize types.Word
+	prgRAM     []byte
+
+	switchableBank []byte
+	fixedBank      []byte
 }
 
-func CreateMapperUxROM(prgROM, chrROM []byte) *MapperUxROM {
+func CreateMapperUxROM(program *program.Program) *MapperUxROM {
 	var chr [constants.Kib8]byte
-	if len(chrROM) == 0 {
-		chr = [constants.Kib8]byte{} // CHR RAM
+
+	var prgRAM []byte
+	var prgRAMSize types.Word
+	isPRGRAM := false
+
+	if program.IsINES2 {
+		chr = [constants.Kib8]byte(program.ChrRom)
+		if program.ChrRAMSize > 0 {
+			chr = [constants.Kib8]byte{}
+		}
+
+		if program.PrgRAMSize > 0 {
+			isPRGRAM = true
+			prgRAMSize = program.PrgRAMSize
+			prgRAM = make([]byte, program.PrgRAMSize)
+		}
 	} else {
-		chr = [constants.Kib8]byte(chrROM)
+		if program.ChrRomBankSize == 0 {
+			chr = [constants.Kib8]byte{} // CHR RAM
+		} else {
+			chr = [constants.Kib8]byte(program.ChrRom)
+		}
 	}
 
-	size := len(prgROM)
-	fixedBank := prgROM[size-constants.Kib16:]
-	maxBanks := size / constants.Kib16
+	fixedBankStartIdx := (program.PrgRomBankSize - 1) * constants.Kib16
+	switchableBank := program.PrgRom[:constants.Kib16]
+	fixedBank := program.PrgRom[fixedBankStartIdx:]
+	maxBanks := program.PrgRomBankSize
+
 	mapper := MapperUxROM{
-		maxBanks:  byte(maxBanks),
-		prgROM:    prgROM,
-		chrROM:    chr,
-		bank:      prgROM[:constants.Kib16],
-		fixedBank: fixedBank,
+		maxBanks:       maxBanks,
+		prgROM:         program.PrgRom,
+		chrROM:         chr,
+		switchableBank: switchableBank,
+		fixedBank:      fixedBank,
+
+		isPRGRAM:   isPRGRAM,
+		prgRAMSize: prgRAMSize,
+		prgRAM:     prgRAM,
 	}
 
 	return &mapper
 }
 
 func (m *MapperUxROM) ReadMemory(addr types.Word) (bool, byte) {
-	if mapperlib.IsPRGROMAddr(addr) {
+	if m.isPRGRAM && mapperlib.IsPRGRAMAddr(addr) {
+		prgRAMAddr := mapperlib.CalculatePRGRAMAddr(addr)
+		return true, m.prgRAM[prgRAMAddr%m.prgRAMSize]
+	} else if mapperlib.IsPRGROMAddr(addr) {
 		if addr >= fixedBankStart {
 			idx := addr - fixedBankStart
 			return true, m.fixedBank[idx]
 		} else {
 			idx := addr - constants.LowPrgROMAddr
-			return true, m.bank[idx]
+			return true, m.switchableBank[idx]
 		}
 	}
 	return false, 0
 }
 
 func (m *MapperUxROM) WriteMemory(addr types.Word, value byte) {
-	if mapperlib.IsPRGROMAddr(addr) {
-		bankSel := (value & 0x0F) % m.maxBanks
+	if m.isPRGRAM && mapperlib.IsPRGRAMAddr(addr) {
+		prgRAMAddr := mapperlib.CalculatePRGRAMAddr(addr)
+		m.prgRAM[prgRAMAddr%m.prgRAMSize] = value
+	} else if mapperlib.IsPRGROMAddr(addr) {
+		bankSel := types.Word(value&0x0F) % m.maxBanks
 		bankStartIdx := uint(bankSel) * constants.Kib16
 		bankEndIdx := bankStartIdx + constants.Kib16
-		m.bank = m.prgROM[bankStartIdx:bankEndIdx]
+		m.switchableBank = m.prgROM[bankStartIdx:bankEndIdx]
 	}
 }
 
